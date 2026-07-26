@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylog"
+version = "1.0.0"
+description = "A lightweight and extensible logging library for Python."
+readme = "README.md"
+requires-python = ">=3.11"
+
+authors = [
+    { name = "Shohaum Sarkar" }
+]
+
+license = { text = "MIT" }
+
+keywords = [
+    "logging",
+    "logger",
+    "python",
+    "log",
+    "library",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Shohaum/pylog"
+Repository = "https://github.com/Shohaum/pylog"
+Issues = "https://github.com/Shohaum/pylog/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["pylog*"]
