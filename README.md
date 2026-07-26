@@ -29,7 +29,7 @@ A lightweight, modern, and extensible logging library for Python.
 Clone the repository:
 
 ```bash
-git clone https://github.com/<your-username>/pylog.git
+git clone https://github.com/shohaum/pylog.git
 
 cd pylog
 ```
