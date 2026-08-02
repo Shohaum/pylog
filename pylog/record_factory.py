@@ -29,7 +29,7 @@ class LogRecordFactory:
         message: str, 
         exception: BaseException | None = None,
         extra: Mapping[str, Any] | None = None
-    ):
+    ) -> LogRecord:
         """
         Create an immutable log record
         """
