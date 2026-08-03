@@ -1,3 +1,4 @@
+# Logger interface
 from pylog import get_logger
 
 logger = get_logger("Demo")
@@ -10,14 +11,14 @@ logger.warning("Low disk space")
 
 logger.error("Something went wrong")
 
-
-try:
-    10 / 0
-except Exception as exc:
-    logger.exception(
-        "Division failed",
-        exception=exc,
-    )
+# Exception Catching
+# try:
+#     10 / 0
+# except Exception as exc:
+#     logger.exception(
+#         "Division failed",
+#         exception=exc,
+#     )
 
 # Logger Cache
 # from pylog import get_logger
@@ -59,7 +60,7 @@ except Exception as exc:
 
 # logger.info("Written to file")
 
-# Extra Metadata
+# # Extra Metadata
 # logger.info(
 #     "User logged in",
 #     extra={

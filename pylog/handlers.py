@@ -32,7 +32,7 @@ class Handler(ABC):
     
     def emit(self, record: LogRecord) -> None:
         """
-        Thread-sfae wrapper around write().
+        Thread-safe wrapper around write().
         """
 
         message = self._formatter.format(record)
