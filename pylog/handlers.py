@@ -21,14 +21,13 @@ class Handler(ABC):
         self._formatter = formatter or DefaultFormatter()
         self._lock = Lock()
 
-    
     @property
     def formatter(self) -> Formatter:
         return self._formatter
 
     @formatter.setter
-    def formmater(self, formmater: Formatter) -> None:
-        self._formatter = formmater
+    def formatter(self, formatter: Formatter) -> None:
+        self._formatter = formatter
     
     def emit(self, record: LogRecord) -> None:
         """
@@ -39,6 +38,13 @@ class Handler(ABC):
 
         with self._lock:
             self.write(message)
+    
+    def close(self) -> None:
+        """
+        Release any resources held by the handler.
+        Default implementation does nothing.
+        """
+        pass
         
     @abstractmethod
     def write(self, message: str) -> None:
@@ -67,10 +73,10 @@ class FileHandler(Handler):
         self,
         path: str | Path,
         *,
-        formmater: Formatter | None = None,
+        formatter: Formatter | None = None,
         encoding: str = "utf-8"
     ) -> None:
-        super().__init__(formmater)
+        super().__init__(formatter)
 
         self._path = Path(path)
         self._encoding = encoding
