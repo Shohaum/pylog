@@ -105,21 +105,40 @@
 
 # logger.info("Hello")
 
-from pylog import get_logger
-from pylog.formatter import JsonFormatter
-from pylog.handlers import ConsoleHandler
+# Json logging
+# from pylog import get_logger
+# from pylog.formatter import JsonFormatter
+# from pylog.handlers import ConsoleHandler
 
-logger = get_logger(
-    "API",
-    handlers=[
-        ConsoleHandler(
-            formatter=JsonFormatter()
-        )
-    ],
+# logger = get_logger(
+#     "API",
+#     handlers=[
+#         ConsoleHandler(
+#             formatter=JsonFormatter()
+#         )
+#     ],
+# )
+
+# with logger.context(
+#     request_id="req-123",
+#     user_id=42,
+# ):
+#     logger.info("Request started")
+
+# Async logging
+from pylog import get_logger
+from pylog.handlers import AsyncHandler, FileHandler
+
+handler = AsyncHandler(
+    FileHandler("logs/async.log")
 )
 
-with logger.context(
-    request_id="req-123",
-    user_id=42,
-):
-    logger.info("Request started")
+logger = get_logger(
+    "AsyncTest",
+    handlers=[handler],
+)
+
+for i in range(1000):
+    logger.info(f"Message {i}")
+
+logger.close()
