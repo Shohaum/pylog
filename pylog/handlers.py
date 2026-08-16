@@ -225,3 +225,88 @@ class AsyncHandler(Handler):
         tb,
     ) -> None:
         self.close()
+
+class RotatingFileHandler(FileHandler):
+    """
+    Rotates the log file when it reaches a configured size.
+
+    Example:
+        app.log
+        app.log.1
+        app.log.2
+        app.log.3
+    """
+
+    __slots__ = (
+        "_max_bytes",
+        "_backup_count",
+    )
+
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        max_bytes: int,
+        backup_count: int = 5,
+        formatter: Formatter | None = None,
+        encoding: str = "utf-8",
+    ) -> None:
+        if max_bytes <= 0:
+            raise ValueError(
+                "max_bytes must be greater than zero"
+            )
+
+        if backup_count < 0:
+            raise ValueError(
+                "backup_count cannot be negative"
+            )
+
+        super().__init__(
+            path,
+            formatter=formatter,
+            encoding=encoding,
+        )
+
+        self._max_bytes = max_bytes
+        self._backup_count = backup_count
+
+    def write(self, message: str) -> None:
+        data = f"{message}\n"
+        size = len(data.encode(self._encoding))
+
+        if self._stream.tell() + size > self._max_bytes:
+            self._rotate()
+
+        self._stream.write(data)
+        self._stream.flush()
+
+    def _rotate(self) -> None:
+        self._stream.close()
+
+        if self._backup_count > 0:
+            for index in range(
+                self._backup_count - 1,
+                0,
+                -1,
+            ):
+                source = self._path.with_name(
+                    f"{self._path.name}.{index}"
+                )
+                destination = self._path.with_name(
+                    f"{self._path.name}.{index + 1}"
+                )
+
+                if source.exists():
+                    source.replace(destination)
+
+            rotated = self._path.with_name(
+                f"{self._path.name}.1"
+            )
+
+            if self._path.exists():
+                self._path.replace(rotated)
+
+        self._stream = self._path.open(
+            mode="a",
+            encoding=self._encoding,
+        )

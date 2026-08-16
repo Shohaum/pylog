@@ -126,19 +126,41 @@
 #     logger.info("Request started")
 
 # Async logging
-from pylog import get_logger
-from pylog.handlers import AsyncHandler, FileHandler
+# from pylog import get_logger
+# from pylog.handlers import AsyncHandler, FileHandler
 
-handler = AsyncHandler(
-    FileHandler("logs/async.log")
+# handler = AsyncHandler(
+#     FileHandler("logs/async.log")
+# )
+
+# logger = get_logger(
+#     "AsyncTest",
+#     handlers=[handler],
+# )
+
+# for i in range(1000):
+#     logger.info(f"Message {i}")
+
+# logger.close()
+
+# Rotating file handling
+from pylog import get_logger
+from pylog.handlers import RotatingFileHandler
+
+handler = RotatingFileHandler(
+    "logs/rotation.log",
+    max_bytes=500,
+    backup_count=3,
 )
 
 logger = get_logger(
-    "AsyncTest",
+    "RotationTest",
     handlers=[handler],
 )
 
-for i in range(1000):
-    logger.info(f"Message {i}")
+for i in range(100):
+    logger.info(
+        f"This is test message number {i}"
+    )
 
 logger.close()
