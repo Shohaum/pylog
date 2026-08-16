@@ -166,21 +166,52 @@
 # logger.close()
 
 # Color output in the terminal
-from pylog import get_logger
-from pylog.formatter import ColoredFormatter
-from pylog.handlers import ConsoleHandler
+# from pylog import get_logger
+# from pylog.formatter import ColoredFormatter
+# from pylog.handlers import ConsoleHandler
 
-logger = get_logger(
-    "API",
-    handlers=[
-        ConsoleHandler(
-            formatter=ColoredFormatter()
-        )
-    ],
+# logger = get_logger(
+#     "API",
+#     handlers=[
+#         ConsoleHandler(
+#             formatter=ColoredFormatter()
+#         )
+#     ],
+# )
+
+# logger.debug("Debug information")
+# logger.info("Server started")
+# logger.warning("Cache miss")
+# logger.error("Database timeout")
+# logger.critical("System failure")
+
+# Integration testing
+from pylog import get_logger
+from pylog.formatter import JsonFormatter
+from pylog.handlers import AsyncHandler, RotatingFileHandler
+
+handler = AsyncHandler(
+    RotatingFileHandler(
+        "logs/integration.log",
+        max_bytes=5_000,
+        backup_count=3,
+        formatter=JsonFormatter(),
+    )
 )
 
-logger.debug("Debug information")
-logger.info("Server started")
-logger.warning("Cache miss")
-logger.error("Database timeout")
-logger.critical("System failure")
+logger = get_logger(
+    "IntegrationTest",
+    handlers=[handler],
+)
+
+with logger.context(
+    request_id="req-123",
+    user_id=42,
+):
+    for i in range(1_000):
+        logger.info(
+            "Processing request",
+            extra={"iteration": i},
+        )
+
+logger.close()
