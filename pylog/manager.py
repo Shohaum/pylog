@@ -58,9 +58,11 @@ class LoggerManager:
         logger = Logger(
             name=name,
             level=level or self._default_level,
-            handlers=list(handlers) 
-            if handlers is not None 
-            else self._default_handlers,
+            handlers=(
+                list(handlers)
+                if handlers is not None
+                else list(self._default_handlers)
+            ),
             record_factory=self._record_factory
         )
 

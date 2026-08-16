@@ -1,15 +1,15 @@
 # Logger interface
-from pylog import get_logger
+# from pylog import get_logger
 
-logger = get_logger("Demo")
+# logger = get_logger("Demo")
 
-logger.info("Application started")
+# logger.info("Application started")
 
-logger.debug("Debug message")
+# logger.debug("Debug message")
 
-logger.warning("Low disk space")
+# logger.warning("Low disk space")
 
-logger.error("Something went wrong")
+# logger.error("Something went wrong")
 
 # Exception Catching
 # try:
@@ -104,3 +104,22 @@ logger.error("Something went wrong")
 # )
 
 # logger.info("Hello")
+
+from pylog import get_logger
+from pylog.formatter import JsonFormatter
+from pylog.handlers import ConsoleHandler
+
+logger = get_logger(
+    "API",
+    handlers=[
+        ConsoleHandler(
+            formatter=JsonFormatter()
+        )
+    ],
+)
+
+with logger.context(
+    request_id="req-123",
+    user_id=42,
+):
+    logger.info("Request started")
