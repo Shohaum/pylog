@@ -144,23 +144,43 @@
 # logger.close()
 
 # Rotating file handling
-from pylog import get_logger
-from pylog.handlers import RotatingFileHandler
+# from pylog import get_logger
+# from pylog.handlers import RotatingFileHandler
 
-handler = RotatingFileHandler(
-    "logs/rotation.log",
-    max_bytes=500,
-    backup_count=3,
-)
+# handler = RotatingFileHandler(
+#     "logs/rotation.log",
+#     max_bytes=500,
+#     backup_count=3,
+# )
+
+# logger = get_logger(
+#     "RotationTest",
+#     handlers=[handler],
+# )
+
+# for i in range(100):
+#     logger.info(
+#         f"This is test message number {i}"
+#     )
+
+# logger.close()
+
+# Color output in the terminal
+from pylog import get_logger
+from pylog.formatter import ColoredFormatter
+from pylog.handlers import ConsoleHandler
 
 logger = get_logger(
-    "RotationTest",
-    handlers=[handler],
+    "API",
+    handlers=[
+        ConsoleHandler(
+            formatter=ColoredFormatter()
+        )
+    ],
 )
 
-for i in range(100):
-    logger.info(
-        f"This is test message number {i}"
-    )
-
-logger.close()
+logger.debug("Debug information")
+logger.info("Server started")
+logger.warning("Cache miss")
+logger.error("Database timeout")
+logger.critical("System failure")

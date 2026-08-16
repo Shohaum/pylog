@@ -116,3 +116,52 @@ class JsonFormatter(Formatter):
             default=repr,
             ensure_ascii=False,
         )
+
+class ColoredFormatter(DefaultFormatter):
+    """
+    Human-readable formatter with ANSI colors based on log level.
+    """
+
+    __slots__ = ("_colors", "_reset")
+
+    _RESET = "\033[0m"
+
+    _DEFAULT_COLORS = {
+        "TRACE": "\033[90m",      # Gray
+        "DEBUG": "\033[36m",      # Cyan
+        "INFO": "\033[32m",       # Green
+        "WARNING": "\033[33m",    # Yellow
+        "ERROR": "\033[31m",      # Red
+        "CRITICAL": "\033[35m",  # Magenta
+    }
+
+    def __init__(
+        self,
+        *,
+        timestamp_format: str = "%Y-%m-%d %H:%M:%S.%f %Z",
+        tzinfo: tzinfo = UTC,
+        include_caller: bool = True,
+        colors: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(
+            timestamp_format=timestamp_format,
+            tzinfo=tzinfo,
+            include_caller=include_caller,
+        )
+
+        self._colors = (
+            dict(colors)
+            if colors is not None
+            else self._DEFAULT_COLORS.copy()
+        )
+        self._reset = self._RESET
+
+    def format(self, record: LogRecord) -> str:
+        message = super().format(record)
+
+        color = self._colors.get(record.level.name)
+
+        if color is None:
+            return message
+
+        return f"{color}{message}{self._reset}"
