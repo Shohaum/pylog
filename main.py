@@ -256,22 +256,100 @@
 # logger.close()
 
 # TTY detection with async handler
-from pylog import get_logger
-from pylog.formatter import ColoredFormatter
-from pylog.handlers import AsyncHandler, ConsoleHandler
+# from pylog import get_logger
+# from pylog.formatter import ColoredFormatter
+# from pylog.handlers import AsyncHandler, ConsoleHandler
 
-logger = get_logger(
-    "AsyncTTY",
-    handlers=[
-        AsyncHandler(
-            ConsoleHandler(
-                formatter=ColoredFormatter()
-            )
-        )
+# logger = get_logger(
+#     "AsyncTTY",
+#     handlers=[
+#         AsyncHandler(
+#             ConsoleHandler(
+#                 formatter=ColoredFormatter()
+#             )
+#         )
+#     ],
+# )
+
+# for i in range(100):
+#     logger.info(f"Message {i}")
+
+# logger.close()
+
+# Logger filter
+# from pylog import get_logger
+# from pylog.filters import LevelFilter
+# from pylog.levels import LogLevel
+
+# logger = get_logger(
+#     "FilterTest",
+#     level=LogLevel.DEBUG,
+#     filters=[
+#         LevelFilter(LogLevel.ERROR),
+#     ],
+# )
+
+# logger.debug("Should NOT appear")
+# logger.info("Should NOT appear")
+# logger.warning("Should NOT appear")
+# logger.error("Should appear")
+# logger.critical("Should appear")
+
+# logger.close()
+
+# Logger filter with different handlers
+# from pylog import get_logger
+# from pylog.filters import LevelFilter
+# from pylog.handlers import ConsoleHandler, FileHandler
+# from pylog.levels import LogLevel
+
+# console = ConsoleHandler()
+
+# file_handler = FileHandler(
+#     "logs/errors.log",
+#     filters=[
+#         LevelFilter(LogLevel.ERROR),
+#     ],
+# )
+
+# logger = get_logger(
+#     "HandlerFilterTest",
+#     handlers=[
+#         console,
+#         file_handler,
+#     ],
+# )
+
+# logger.info("Info message")
+# logger.warning("Warning message")
+# logger.error("Error message")
+
+# logger.close()
+
+# Logger filter with async
+from pylog import get_logger
+from pylog.filters import LevelFilter
+from pylog.handlers import AsyncHandler, FileHandler
+from pylog.levels import LogLevel
+
+handler = AsyncHandler(
+    FileHandler(
+        "logs/async-errors.log",
+    ),
+    filters=[
+        LevelFilter(LogLevel.ERROR),
     ],
 )
 
+logger = get_logger(
+    "AsyncFilter",
+    handlers=[handler],
+)
+
 for i in range(100):
-    logger.info(f"Message {i}")
+    logger.info(f"Info {i}")
+
+for i in range(100):
+    logger.error(f"Error {i}")
 
 logger.close()

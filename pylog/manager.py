@@ -3,6 +3,7 @@ from typing import Iterable
 
 from .caller_info import CallerInspector
 from .handlers import ConsoleHandler, Handler
+from .filters import Filter
 from .levels import LogLevel
 from .logger import Logger
 from .record_factory import LogRecordFactory
@@ -45,7 +46,8 @@ class LoggerManager:
         name: str,
         *,
         level: LogLevel | None = None,
-        handlers: Iterable[Handler] | None = None
+        handlers: Iterable[Handler] | None = None,
+        filters: Iterable[Filter] | None = None,
     ) -> Logger:
         """
         Return a cached logger or create one if it doesn't exist.
@@ -63,6 +65,7 @@ class LoggerManager:
                 if handlers is not None
                 else list(self._default_handlers)
             ),
+            filters=filters,
             record_factory=self._record_factory
         )
 

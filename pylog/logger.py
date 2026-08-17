@@ -4,6 +4,7 @@ from contextlib import AbstractContextManager
 from typing import Any
 
 from .context import bind
+from .filters import Filter
 from .handlers import ConsoleHandler, Handler
 from .levels import LogLevel
 from .record_factory import LogRecordFactory
@@ -17,6 +18,7 @@ class Logger:
         "_name",
         "_level",
         "_handlers",
+        "_filters",
         "_record_factory",
     )
 
@@ -27,6 +29,7 @@ class Logger:
         record_factory: LogRecordFactory,
         level: LogLevel = LogLevel.INFO,
         handlers: Iterable[Handler] | None = None,
+        filters: Iterable[Filter] | None = None,
     ) -> None:
         if not name:
             raise ValueError("Logger name cannot be empty.")
@@ -39,6 +42,12 @@ class Logger:
             list(handlers)
             if handlers is not None
             else [ConsoleHandler()]
+        )
+
+        self._filters = (
+            list(filters)
+            if filters is not None
+            else []
         )
 
     @property
@@ -59,11 +68,16 @@ class Logger:
     def remove_handler(self, handler: Handler) -> None:
         self._handlers.remove(handler)
 
-    def context(self, **values: Any) -> AbstractContextManager[None]:
-        """
-        Temporarily add structured metadata to all logs
-        created within the context.
-        """
+    def add_filter(self, filter_: Filter) -> None:
+        self._filters.append(filter_)
+
+    def remove_filter(self, filter_: Filter) -> None:
+        self._filters.remove(filter_)
+
+    def context(
+        self,
+        **values: Any,
+    ) -> AbstractContextManager[None]:
         return bind(**values)
 
     def log(
@@ -84,6 +98,12 @@ class Logger:
             exception=exception,
             extra=extra,
         )
+
+        if not all(
+            filter_.filter(record)
+            for filter_ in self._filters
+        ):
+            return
 
         for handler in self._handlers:
             handler.emit(record)

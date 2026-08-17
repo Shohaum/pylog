@@ -1,11 +1,13 @@
 from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from pathlib import Path
 from queue import Queue
 from threading import Lock, Thread
 from typing import TextIO
 
+from .filters import Filter
 from .formatter import DefaultFormatter, Formatter
 from .record import LogRecord
 
@@ -14,14 +16,21 @@ class Handler(ABC):
     Base class for all log handlers.
     """
 
-    __slots__ = ("_formatter", "_lock")
+    __slots__ = (
+        "_formatter",
+        "_lock",
+        "_filters",
+    )
 
     def __init__(
         self,
         formatter: Formatter | None = None,
+        *,
+        filters: Iterable[Filter] | None = None,
     ) -> None:
         self._formatter = formatter or DefaultFormatter()
         self._lock = Lock()
+        self._filters = list(filters) if filters is not None else []
 
     @property
     def formatter(self) -> Formatter:
@@ -33,15 +42,27 @@ class Handler(ABC):
 
     @property
     def supports_color(self) -> bool:
-        """
-        Whether the handler's destination supports ANSI colors.
-        """
         return False
+
+    def add_filter(self, filter_: Filter) -> None:
+        self._filters.append(filter_)
+
+    def remove_filter(self, filter_: Filter) -> None:
+        self._filters.remove(filter_)
+
+    def _should_emit(self, record: LogRecord) -> bool:
+        return all(
+            filter_.filter(record)
+            for filter_ in self._filters
+        )
 
     def emit(self, record: LogRecord) -> None:
         """
-        Thread-safe wrapper around formatting and writing.
+        Filter, format, and write a record.
         """
+
+        if not self._should_emit(record):
+            return
 
         message = self._formatter.format(
             record,
@@ -52,16 +73,10 @@ class Handler(ABC):
             self.write(message)
 
     def close(self) -> None:
-        """
-        Release any resources held by the handler.
-        """
         pass
 
     @abstractmethod
     def write(self, message: str) -> None:
-        """
-        Write a formatted log message.
-        """
         raise NotImplementedError
 
 class ConsoleHandler(Handler):
@@ -97,8 +112,12 @@ class FileHandler(Handler):
         *,
         formatter: Formatter | None = None,
         encoding: str = "utf-8",
+        filters: Iterable[Filter] | None = None,
     ) -> None:
-        super().__init__(formatter)
+        super().__init__(
+            formatter,
+            filters=filters,
+        )
 
         self._path = Path(path)
         self._encoding = encoding
@@ -110,7 +129,7 @@ class FileHandler(Handler):
 
         self._stream: TextIO = self._path.open(
             mode="a",
-            encoding=encoding,
+            encoding=self._encoding,
         )
 
     @property
@@ -154,18 +173,21 @@ class AsyncHandler(Handler):
         handler: Handler,
         *,
         max_queue_size: int = 10_000,
+        filters: Iterable[Filter] | None = None,
     ) -> None:
         if max_queue_size <= 0:
             raise ValueError(
                 "max_queue_size must be greater than zero"
             )
 
-        super().__init__()
+        super().__init__(filters=filters)
 
         self._handler = handler
+
         self._queue: Queue[LogRecord | None] = Queue(
             maxsize=max_queue_size
         )
+
         self._closed = False
 
         self._worker = Thread(
@@ -173,6 +195,7 @@ class AsyncHandler(Handler):
             name="pylog-handler",
             daemon=False,
         )
+
         self._worker.start()
 
     @property
@@ -184,6 +207,9 @@ class AsyncHandler(Handler):
             raise RuntimeError(
                 "Cannot emit to a closed AsyncHandler"
             )
+
+        if not self._should_emit(record):
+            return
 
         self._queue.put(record)
 
@@ -206,16 +232,9 @@ class AsyncHandler(Handler):
                 self._queue.task_done()
 
     def flush(self) -> None:
-        """
-        Wait until all queued records have been processed.
-        """
         self._queue.join()
 
     def close(self) -> None:
-        """
-        Gracefully stop the worker after processing queued records.
-        """
-
         if self._closed:
             return
 
@@ -255,6 +274,7 @@ class RotatingFileHandler(FileHandler):
         backup_count: int = 5,
         formatter: Formatter | None = None,
         encoding: str = "utf-8",
+        filters: Iterable[Filter] | None = None,
     ) -> None:
         if max_bytes <= 0:
             raise ValueError(
@@ -270,6 +290,7 @@ class RotatingFileHandler(FileHandler):
             path,
             formatter=formatter,
             encoding=encoding,
+            filters=filters,
         )
 
         self._max_bytes = max_bytes
