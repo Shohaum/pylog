@@ -1,10 +1,13 @@
 from __future__ import annotations
+import sys
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from pathlib import Path
 from queue import Queue
-from threading import Event, Lock, Thread
+from threading import Lock, Thread
 from typing import TextIO
 
+from .filters import Filter
 from .formatter import DefaultFormatter, Formatter
 from .record import LogRecord
 
@@ -13,14 +16,21 @@ class Handler(ABC):
     Base class for all log handlers.
     """
 
-    __slots__ = ("_formatter", "_lock")
+    __slots__ = (
+        "_formatter",
+        "_lock",
+        "_filters",
+    )
 
     def __init__(
         self,
         formatter: Formatter | None = None,
+        *,
+        filters: Iterable[Filter] | None = None,
     ) -> None:
         self._formatter = formatter or DefaultFormatter()
         self._lock = Lock()
+        self._filters = list(filters) if filters is not None else []
 
     @property
     def formatter(self) -> Formatter:
@@ -30,27 +40,43 @@ class Handler(ABC):
     def formatter(self, formatter: Formatter) -> None:
         self._formatter = formatter
 
+    @property
+    def supports_color(self) -> bool:
+        return False
+
+    def add_filter(self, filter_: Filter) -> None:
+        self._filters.append(filter_)
+
+    def remove_filter(self, filter_: Filter) -> None:
+        self._filters.remove(filter_)
+
+    def _should_emit(self, record: LogRecord) -> bool:
+        return all(
+            filter_.filter(record)
+            for filter_ in self._filters
+        )
+
     def emit(self, record: LogRecord) -> None:
         """
-        Thread-safe wrapper around write().
+        Filter, format, and write a record.
         """
 
-        message = self._formatter.format(record)
+        if not self._should_emit(record):
+            return
+
+        message = self._formatter.format(
+            record,
+            color=self.supports_color,
+        )
 
         with self._lock:
             self.write(message)
 
     def close(self) -> None:
-        """
-        Release any resources held by the handler.
-        """
         pass
 
     @abstractmethod
     def write(self, message: str) -> None:
-        """
-        Write a formatted log message.
-        """
         raise NotImplementedError
 
 class ConsoleHandler(Handler):
@@ -60,6 +86,12 @@ class ConsoleHandler(Handler):
 
     __slots__ = ()
 
+    @property
+    def supports_color(self) -> bool:
+        return bool(
+            getattr(sys.stdout, "isatty", lambda: False)()
+        )
+
     def write(self, message: str) -> None:
         print(message)
 
@@ -68,7 +100,11 @@ class FileHandler(Handler):
     Writes logs to a file.
     """
 
-    __slots__ = ("_path", "_encoding", "_stream")
+    __slots__ = (
+        "_path",
+        "_encoding",
+        "_stream",
+    )
 
     def __init__(
         self,
@@ -76,8 +112,12 @@ class FileHandler(Handler):
         *,
         formatter: Formatter | None = None,
         encoding: str = "utf-8",
+        filters: Iterable[Filter] | None = None,
     ) -> None:
-        super().__init__(formatter)
+        super().__init__(
+            formatter,
+            filters=filters,
+        )
 
         self._path = Path(path)
         self._encoding = encoding
@@ -119,15 +159,11 @@ class FileHandler(Handler):
 class AsyncHandler(Handler):
     """
     Executes another handler in a background worker thread.
-
-    The caller only places the LogRecord into a queue.
-    Formatting and actual I/O happen in the worker thread.
     """
 
     __slots__ = (
         "_handler",
         "_queue",
-        "_stop_event",
         "_worker",
         "_closed",
     )
@@ -137,19 +173,21 @@ class AsyncHandler(Handler):
         handler: Handler,
         *,
         max_queue_size: int = 10_000,
+        filters: Iterable[Filter] | None = None,
     ) -> None:
         if max_queue_size <= 0:
             raise ValueError(
                 "max_queue_size must be greater than zero"
             )
 
-        super().__init__()
+        super().__init__(filters=filters)
 
         self._handler = handler
+
         self._queue: Queue[LogRecord | None] = Queue(
             maxsize=max_queue_size
         )
-        self._stop_event = Event()
+
         self._closed = False
 
         self._worker = Thread(
@@ -157,26 +195,25 @@ class AsyncHandler(Handler):
             name="pylog-handler",
             daemon=False,
         )
+
         self._worker.start()
 
-    def emit(self, record: LogRecord) -> None:
-        """
-        Queue the record for background processing.
-        """
+    @property
+    def supports_color(self) -> bool:
+        return self._handler.supports_color
 
+    def emit(self, record: LogRecord) -> None:
         if self._closed:
             raise RuntimeError(
                 "Cannot emit to a closed AsyncHandler"
             )
 
+        if not self._should_emit(record):
+            return
+
         self._queue.put(record)
 
     def write(self, message: str) -> None:
-        """
-        AsyncHandler does not write directly.
-
-        Records are processed by the worker thread.
-        """
         raise RuntimeError(
             "AsyncHandler.write() should not be called directly"
         )
@@ -195,16 +232,9 @@ class AsyncHandler(Handler):
                 self._queue.task_done()
 
     def flush(self) -> None:
-        """
-        Wait until all queued records have been processed.
-        """
         self._queue.join()
 
     def close(self) -> None:
-        """
-        Gracefully stop the worker after processing queued records.
-        """
-
         if self._closed:
             return
 
@@ -229,12 +259,6 @@ class AsyncHandler(Handler):
 class RotatingFileHandler(FileHandler):
     """
     Rotates the log file when it reaches a configured size.
-
-    Example:
-        app.log
-        app.log.1
-        app.log.2
-        app.log.3
     """
 
     __slots__ = (
@@ -250,6 +274,7 @@ class RotatingFileHandler(FileHandler):
         backup_count: int = 5,
         formatter: Formatter | None = None,
         encoding: str = "utf-8",
+        filters: Iterable[Filter] | None = None,
     ) -> None:
         if max_bytes <= 0:
             raise ValueError(
@@ -265,6 +290,7 @@ class RotatingFileHandler(FileHandler):
             path,
             formatter=formatter,
             encoding=encoding,
+            filters=filters,
         )
 
         self._max_bytes = max_bytes
