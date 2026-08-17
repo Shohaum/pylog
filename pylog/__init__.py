@@ -22,12 +22,14 @@ def get_logger(
     level: LogLevel | None = None,
     handlers: Iterable[Handler] | None = None,
     filters: Iterable[Filter] | None = None,
+    propagate: bool = True
 ):
     return _manager.get_logger(
         name,
         level=level,
         handlers=handlers,
         filters=filters,
+        propagate=propagate
     )
 
 

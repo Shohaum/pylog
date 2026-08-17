@@ -327,29 +327,191 @@
 # logger.close()
 
 # Logger filter with async
+# from pylog import get_logger
+# from pylog.filters import LevelFilter
+# from pylog.handlers import AsyncHandler, FileHandler
+# from pylog.levels import LogLevel
+
+# handler = AsyncHandler(
+#     FileHandler(
+#         "logs/async-errors.log",
+#     ),
+#     filters=[
+#         LevelFilter(LogLevel.ERROR),
+#     ],
+# )
+
+# logger = get_logger(
+#     "AsyncFilter",
+#     handlers=[handler],
+# )
+
+# for i in range(100):
+#     logger.info(f"Info {i}")
+
+# for i in range(100):
+#     logger.error(f"Error {i}")
+
+# logger.close()
+
+# Basic hierarchy
+# from pylog import get_logger
+# from pylog.levels import LogLevel
+
+# app = get_logger("app")
+# api = get_logger("app.api")
+# auth = get_logger("app.api.auth")
+
+# assert api.parent is app
+# assert auth.parent is api
+
+# print("Basic hierarchy passed")
+
+# Level inheritence
+# from pylog import get_logger
+# from pylog.levels import LogLevel
+
+# app = get_logger("app")
+# api = get_logger("app.api")
+# auth = get_logger("app.api.auth")
+# app.level = LogLevel.WARNING
+
+# assert api.level is None
+# assert api.effective_level == LogLevel.WARNING
+
+# assert auth.level is None
+# assert auth.effective_level == LogLevel.WARNING
+
+# print("Level inheritance passed")
+
+# Child override
+# from pylog import get_logger
+# from pylog.levels import LogLevel
+
+# app = get_logger("app")
+# api = get_logger("app.api")
+# auth = get_logger("app.api.auth")
+
+# app.level = LogLevel.WARNING
+# auth.level = LogLevel.DEBUG
+
+# assert auth.effective_level == LogLevel.DEBUG
+# assert api.effective_level == LogLevel.WARNING
+
+# print("Child level override passed")
+
+# Propagation test
+# from pathlib import Path
+
+# from pylog import get_logger
+# from pylog.handlers import FileHandler
+
+# log_path = Path("logs/hierarchy.log")
+
+# if log_path.exists():
+#     log_path.unlink()
+
+# app = get_logger(
+#     "application",
+#     handlers=[
+#         FileHandler(log_path)
+#     ],
+# )
+
+# auth = get_logger("application.api.auth")
+
+# auth.error("Authentication failed")
+
+# app.close()
+# auth.close()
+
+# content = log_path.read_text()
+
+# assert "Authentication failed" in content
+
+# print("Propagation passed")
+
+# Propagation disabled
+# from pathlib import Path
+
+# from pylog import get_logger
+# from pylog.handlers import FileHandler
+
+# log_path = Path("logs/no_propagation.log")
+
+# if log_path.exists():
+#     log_path.unlink()
+
+# app = get_logger(
+#     "service",
+#     handlers=[
+#         FileHandler(log_path)
+#     ],
+# )
+
+# worker = get_logger(
+#     "service.worker",
+#     propagate=False,
+# )
+
+# worker.error("Worker failure")
+
+# app.close()
+# worker.close()
+
+# content = (
+#     log_path.read_text()
+#     if log_path.exists()
+#     else ""
+# )
+
+# assert "Worker failure" not in content
+
+# print("Propagation disabled passed")
+
+# Parent created AFTER child
+# from pylog import get_logger
+
+# child = get_logger("backend.api.auth")
+
+# assert child.parent.name == ""
+
+# parent = get_logger("backend.api")
+
+# assert child.parent is parent
+
+# print("Late parent creation passed")
+
+# No duplicate logging
+# from pylog import get_logger
+# from pylog.handlers import FileHandler
+
+# root = get_logger(
+#     "myapp",
+#     handlers=[
+#         FileHandler("logs/duplicate.log")
+#     ],
+# )
+
+# child = get_logger("myapp.api")
+
+# child.error("ONE MESSAGE")
+
+# root.close()
+# child.close()
+
+# Full hierarchy
 from pylog import get_logger
-from pylog.filters import LevelFilter
-from pylog.handlers import AsyncHandler, FileHandler
-from pylog.levels import LogLevel
 
-handler = AsyncHandler(
-    FileHandler(
-        "logs/async-errors.log",
-    ),
-    filters=[
-        LevelFilter(LogLevel.ERROR),
-    ],
-)
+root = get_logger("myapp")
+api = get_logger("myapp.api")
+auth = get_logger("myapp.api.auth")
+payments = get_logger("myapp.api.payments")
+worker = get_logger("myapp.worker")
 
-logger = get_logger(
-    "AsyncFilter",
-    handlers=[handler],
-)
+assert api.parent is root
+assert auth.parent is api
+assert payments.parent is api
+assert worker.parent is root
 
-for i in range(100):
-    logger.info(f"Info {i}")
-
-for i in range(100):
-    logger.error(f"Error {i}")
-
-logger.close()
+print("Full hierarchy passed")

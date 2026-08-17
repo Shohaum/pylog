@@ -1,44 +1,48 @@
 from __future__ import annotations
-from typing import Iterable
+from collections.abc import Iterable
 
 from .caller_info import CallerInspector
-from .handlers import ConsoleHandler, Handler
 from .filters import Filter
+from .handlers import ConsoleHandler, Handler
 from .levels import LogLevel
 from .logger import Logger
 from .record_factory import LogRecordFactory
 
 class LoggerManager:
     """
-    Creates and manages Logger instances.
-
-    Loggers are cached by name so repeated calls to get_logger()
-    return the same Logger instance.
+    Creates and manages a hierarchy of Logger instances.
     """
 
     __slots__ = (
         "_record_factory",
         "_loggers",
-        "_default_level",
-        "_default_handlers"
+        "_root",
     )
 
     def __init__(
         self,
         *,
         default_level: LogLevel = LogLevel.INFO,
-        default_handlers: Iterable[Handler] | None = None
-    )  -> None:
-    
+        default_handlers: Iterable[Handler] | None = None,
+    ) -> None:
         inspector = CallerInspector()
 
         self._record_factory = LogRecordFactory(inspector)
-        self._default_level = default_level
-        self._default_handlers = (
-            list(default_handlers) 
-            if default_handlers is not None 
+
+        handlers = (
+            list(default_handlers)
+            if default_handlers is not None
             else [ConsoleHandler()]
         )
+
+        self._root = Logger(
+            name="",
+            record_factory=self._record_factory,
+            level=default_level,
+            handlers=handlers,
+            propagate=False,
+        )
+
         self._loggers: dict[str, Logger] = {}
 
     def get_logger(
@@ -48,36 +52,93 @@ class LoggerManager:
         level: LogLevel | None = None,
         handlers: Iterable[Handler] | None = None,
         filters: Iterable[Filter] | None = None,
+        propagate: bool = True,
     ) -> Logger:
         """
         Return a cached logger or create one if it doesn't exist.
         """
+
+        if not name:
+            return self._root
+
         logger = self._loggers.get(name)
 
         if logger is not None:
             return logger
 
+        parent = self._find_parent(name)
+
         logger = Logger(
             name=name,
-            level=level or self._default_level,
+            record_factory=self._record_factory,
+            level=level,
             handlers=(
                 list(handlers)
                 if handlers is not None
-                else list(self._default_handlers)
+                else []
             ),
             filters=filters,
-            record_factory=self._record_factory
+            parent=parent,
+            propagate=propagate,
         )
 
         self._loggers[name] = logger
+
+        self._reparent_children(logger)
+
         return logger
 
+    def _find_parent(self, name: str) -> Logger:
+        """
+        Find the nearest existing ancestor.
+
+        Example:
+
+            app.api.auth
+            app.api exists
+            -> app.api becomes parent
+        """
+
+        parts = name.split(".")
+
+        for index in range(len(parts) - 1, 0, -1):
+            parent_name = ".".join(parts[:index])
+
+            parent = self._loggers.get(parent_name)
+
+            if parent is not None:
+                return parent
+
+        return self._root
+
+    def _reparent_children(self, logger: Logger) -> None:
+        """
+        Reparent existing loggers whose nearest ancestor is now
+        the newly-created logger.
+        """
+
+        for child in self._loggers.values():
+            if child is logger:
+                continue
+
+            if not child.name.startswith(
+                f"{logger.name}."
+            ):
+                continue
+
+            parent = self._find_parent(child.name)
+
+            if parent is logger:
+                child.set_parent(logger)
+
     def clear(self) -> None:
-            """
-            Close all handlers and remove every cached logger.
-            """
+        """
+        Close all handlers and remove all managed loggers.
+        """
 
-            for logger in self._loggers.values():
-                logger.close()
+        for logger in self._loggers.values():
+            logger.close()
 
-            self._loggers.clear()
+        self._root.close()
+
+        self._loggers.clear()
