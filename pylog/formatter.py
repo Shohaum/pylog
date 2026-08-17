@@ -12,9 +12,16 @@ class Formatter(ABC):
     """
 
     @abstractmethod
-    def format(self, record: LogRecord) -> str:
+    def format(
+        self,
+        record: LogRecord,
+        *,
+        color: bool = False,
+    ) -> str:
         """
         Convert a LogRecord into its string representation.
+
+        `color` indicates whether the destination supports ANSI colors.
         """
         raise NotImplementedError
 
@@ -40,7 +47,12 @@ class DefaultFormatter(Formatter):
         self._tzinfo = tzinfo
         self._include_caller = include_caller
 
-    def format(self, record: LogRecord) -> str:
+    def format(
+        self,
+        record: LogRecord,
+        *,
+        color: bool = False,
+    ) -> str:
         timestamp = record.timestamp.astimezone(
             self._tzinfo
         ).strftime(self._timestamp_format)
@@ -86,7 +98,12 @@ class JsonFormatter(Formatter):
     ) -> None:
         self._include_caller = include_caller
 
-    def format(self, record: LogRecord) -> str:
+    def format(
+        self,
+        record: LogRecord,
+        *,
+        color: bool = False,
+    ) -> str:
         data: dict[str, Any] = {
             "timestamp": record.timestamp.isoformat(),
             "level": record.level.name,
@@ -119,20 +136,25 @@ class JsonFormatter(Formatter):
 
 class ColoredFormatter(DefaultFormatter):
     """
-    Human-readable formatter with ANSI colors based on log level.
+    Human-readable formatter that optionally uses ANSI colors.
+
+    Colors are enabled only when the destination supports them.
     """
 
-    __slots__ = ("_colors", "_reset")
+    __slots__ = (
+        "_colors",
+        "_reset",
+    )
 
     _RESET = "\033[0m"
 
     _DEFAULT_COLORS = {
-        "TRACE": "\033[90m",      # Gray
-        "DEBUG": "\033[36m",      # Cyan
-        "INFO": "\033[32m",       # Green
-        "WARNING": "\033[33m",    # Yellow
-        "ERROR": "\033[31m",      # Red
-        "CRITICAL": "\033[35m",  # Magenta
+        "TRACE": "\033[90m",
+        "DEBUG": "\033[36m",
+        "INFO": "\033[32m",
+        "WARNING": "\033[33m",
+        "ERROR": "\033[31m",
+        "CRITICAL": "\033[35m",
     }
 
     def __init__(
@@ -156,12 +178,23 @@ class ColoredFormatter(DefaultFormatter):
         )
         self._reset = self._RESET
 
-    def format(self, record: LogRecord) -> str:
-        message = super().format(record)
+    def format(
+        self,
+        record: LogRecord,
+        *,
+        color: bool = False,
+    ) -> str:
+        message = super().format(
+            record,
+            color=False,
+        )
 
-        color = self._colors.get(record.level.name)
-
-        if color is None:
+        if not color:
             return message
 
-        return f"{color}{message}{self._reset}"
+        color_code = self._colors.get(record.level.name)
+
+        if color_code is None:
+            return message
+
+        return f"{color_code}{message}{self._reset}"

@@ -186,32 +186,92 @@
 # logger.critical("System failure")
 
 # Integration testing
-from pylog import get_logger
-from pylog.formatter import JsonFormatter
-from pylog.handlers import AsyncHandler, RotatingFileHandler
+# from pylog import get_logger
+# from pylog.formatter import JsonFormatter
+# from pylog.handlers import AsyncHandler, RotatingFileHandler
 
-handler = AsyncHandler(
-    RotatingFileHandler(
-        "logs/integration.log",
-        max_bytes=5_000,
-        backup_count=3,
-        formatter=JsonFormatter(),
-    )
-)
+# handler = AsyncHandler(
+#     RotatingFileHandler(
+#         "logs/integration.log",
+#         max_bytes=5_000,
+#         backup_count=3,
+#         formatter=JsonFormatter(),
+#     )
+# )
+
+# logger = get_logger(
+#     "IntegrationTest",
+#     handlers=[handler],
+# )
+
+# with logger.context(
+#     request_id="req-123",
+#     user_id=42,
+# ):
+#     for i in range(1_000):
+#         logger.info(
+#             "Processing request",
+#             extra={"iteration": i},
+#         )
+
+# logger.close()
+
+# TTY test
+# from pylog import get_logger
+# from pylog.formatter import ColoredFormatter
+# from pylog.handlers import ConsoleHandler
+
+# logger = get_logger(
+#     "TTYTest",
+#     handlers=[
+#         ConsoleHandler(
+#             formatter=ColoredFormatter()
+#         )
+#     ],
+# )
+
+# logger.debug("Debug message")
+# logger.info("Info message")
+# logger.warning("Warning message")
+# logger.error("Error message")
+# logger.critical("Critical message")
+
+# Color formatter with file handler
+# from pylog import get_logger
+# from pylog.formatter import ColoredFormatter
+# from pylog.handlers import FileHandler
+
+# logger = get_logger(
+#     "FileTest",
+#     handlers=[
+#         FileHandler(
+#             "logs/color_test.log",
+#             formatter=ColoredFormatter(),
+#         )
+#     ],
+# )
+
+# logger.info("This should not contain ANSI colors")
+
+# logger.close()
+
+# TTY detection with async handler
+from pylog import get_logger
+from pylog.formatter import ColoredFormatter
+from pylog.handlers import AsyncHandler, ConsoleHandler
 
 logger = get_logger(
-    "IntegrationTest",
-    handlers=[handler],
+    "AsyncTTY",
+    handlers=[
+        AsyncHandler(
+            ConsoleHandler(
+                formatter=ColoredFormatter()
+            )
+        )
+    ],
 )
 
-with logger.context(
-    request_id="req-123",
-    user_id=42,
-):
-    for i in range(1_000):
-        logger.info(
-            "Processing request",
-            extra={"iteration": i},
-        )
+for i in range(100):
+    logger.info(f"Message {i}")
 
 logger.close()

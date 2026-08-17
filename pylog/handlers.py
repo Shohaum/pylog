@@ -1,8 +1,9 @@
 from __future__ import annotations
+import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
 from queue import Queue
-from threading import Event, Lock, Thread
+from threading import Lock, Thread
 from typing import TextIO
 
 from .formatter import DefaultFormatter, Formatter
@@ -30,12 +31,22 @@ class Handler(ABC):
     def formatter(self, formatter: Formatter) -> None:
         self._formatter = formatter
 
+    @property
+    def supports_color(self) -> bool:
+        """
+        Whether the handler's destination supports ANSI colors.
+        """
+        return False
+
     def emit(self, record: LogRecord) -> None:
         """
-        Thread-safe wrapper around write().
+        Thread-safe wrapper around formatting and writing.
         """
 
-        message = self._formatter.format(record)
+        message = self._formatter.format(
+            record,
+            color=self.supports_color,
+        )
 
         with self._lock:
             self.write(message)
@@ -60,6 +71,12 @@ class ConsoleHandler(Handler):
 
     __slots__ = ()
 
+    @property
+    def supports_color(self) -> bool:
+        return bool(
+            getattr(sys.stdout, "isatty", lambda: False)()
+        )
+
     def write(self, message: str) -> None:
         print(message)
 
@@ -68,7 +85,11 @@ class FileHandler(Handler):
     Writes logs to a file.
     """
 
-    __slots__ = ("_path", "_encoding", "_stream")
+    __slots__ = (
+        "_path",
+        "_encoding",
+        "_stream",
+    )
 
     def __init__(
         self,
@@ -89,7 +110,7 @@ class FileHandler(Handler):
 
         self._stream: TextIO = self._path.open(
             mode="a",
-            encoding=self._encoding,
+            encoding=encoding,
         )
 
     @property
@@ -119,15 +140,11 @@ class FileHandler(Handler):
 class AsyncHandler(Handler):
     """
     Executes another handler in a background worker thread.
-
-    The caller only places the LogRecord into a queue.
-    Formatting and actual I/O happen in the worker thread.
     """
 
     __slots__ = (
         "_handler",
         "_queue",
-        "_stop_event",
         "_worker",
         "_closed",
     )
@@ -149,7 +166,6 @@ class AsyncHandler(Handler):
         self._queue: Queue[LogRecord | None] = Queue(
             maxsize=max_queue_size
         )
-        self._stop_event = Event()
         self._closed = False
 
         self._worker = Thread(
@@ -159,11 +175,11 @@ class AsyncHandler(Handler):
         )
         self._worker.start()
 
-    def emit(self, record: LogRecord) -> None:
-        """
-        Queue the record for background processing.
-        """
+    @property
+    def supports_color(self) -> bool:
+        return self._handler.supports_color
 
+    def emit(self, record: LogRecord) -> None:
         if self._closed:
             raise RuntimeError(
                 "Cannot emit to a closed AsyncHandler"
@@ -172,11 +188,6 @@ class AsyncHandler(Handler):
         self._queue.put(record)
 
     def write(self, message: str) -> None:
-        """
-        AsyncHandler does not write directly.
-
-        Records are processed by the worker thread.
-        """
         raise RuntimeError(
             "AsyncHandler.write() should not be called directly"
         )
@@ -229,12 +240,6 @@ class AsyncHandler(Handler):
 class RotatingFileHandler(FileHandler):
     """
     Rotates the log file when it reaches a configured size.
-
-    Example:
-        app.log
-        app.log.1
-        app.log.2
-        app.log.3
     """
 
     __slots__ = (
