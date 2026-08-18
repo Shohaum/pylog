@@ -1,32 +1,64 @@
 from __future__ import annotations
+from collections.abc import Mapping
 from contextlib import contextmanager
-from contextvars import ContextVar
-from typing import Any
+from contextvars import ContextVar, Token
+from types import MappingProxyType
+from typing import Any, Iterator
 
-_context: ContextVar[dict[str, Any]] = ContextVar(
+_EMPTY_CONTEXT: Mapping[str, Any] = MappingProxyType({})
+
+_context: ContextVar[Mapping[str, Any]] = ContextVar(
     "pylog_context",
-    default={},
+    default=_EMPTY_CONTEXT,
 )
 
-def get_context() -> dict[str, Any]:
+def get_context() -> Mapping[str, Any]:
     """
-    Return a copy of the current logging context.
+    Return an immutable snapshot of the current logging context.
     """
-    return dict(_context.get())
+    return MappingProxyType(dict(_context.get()))
 
 @contextmanager
-def bind(**values: Any):
+def bind(
+    values: Mapping[str, Any] | None = None,
+    **kwargs: Any,
+) -> Iterator[None]:
     """
     Temporarily add values to the current logging context.
 
-    Context values are automatically restored when the context exits.
+    Nested contexts inherit values from their parent.
+
+    Values supplied through ``kwargs`` override values supplied
+    through ``values``.
     """
+
     current = _context.get()
 
-    merged = current.copy()
-    merged.update(values)
+    merged = dict(current)
 
-    token = _context.set(merged)
+    if values is not None:
+        merged.update(values)
+
+    merged.update(kwargs)
+
+    token: Token[Mapping[str, Any]] = _context.set(
+        MappingProxyType(merged)
+    )
+
+    try:
+        yield
+    finally:
+        _context.reset(token)
+
+@contextmanager
+def clear_context() -> Iterator[None]:
+    """
+    Temporarily clear the current logging context.
+
+    The previous context is restored when the context exits.
+    """
+
+    token = _context.set(_EMPTY_CONTEXT)
 
     try:
         yield

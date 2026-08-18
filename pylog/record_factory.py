@@ -33,11 +33,14 @@ class LogRecordFactory:
     ) -> LogRecord:
         """
         Create an immutable log record.
+
+        The current logging context and explicit ``extra`` metadata
+        are captured at record creation time.
         """
 
         caller = self._caller_inspector.inspect()
 
-        metadata = get_context()
+        metadata = dict(get_context())
 
         if extra is not None:
             metadata.update(extra)

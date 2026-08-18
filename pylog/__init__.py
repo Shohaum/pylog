@@ -10,6 +10,7 @@ from .filters import (
 from .handlers import Handler
 from .levels import LogLevel
 from .manager import LoggerManager
+from .context import bind, clear_context, get_context
 
 _manager = LoggerManager()
 
@@ -63,4 +64,7 @@ __all__ = [
     "configure",
     "get_logger",
     "shutdown",
+    "bind",
+    "clear_context",
+    "get_context",
 ]

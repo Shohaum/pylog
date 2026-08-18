@@ -591,6 +591,62 @@
 # assert logger.effective_level == LogLevel.DEBUG
 
 # Shutdown
-from pylog import shutdown
+# from pylog import shutdown
 
-shutdown()
+# shutdown()
+
+# Nested context
+# from pylog import get_logger
+
+# logger = get_logger("ContextTest")
+
+# with logger.context(request_id="req-123"):
+#     logger.info("First")
+
+#     with logger.context(user_id=42):
+#         logger.info("Second")
+
+#     logger.info("Third")
+
+# logger.close()
+
+# Explicit extra overrides context
+# from pylog import get_logger
+
+# logger = get_logger("ContextTest")
+# with logger.context(user_id=42):
+#     logger.info(
+#         "Test",
+#         extra={"user_id": 100},
+#     )
+
+# Temporarily clear context
+# from pylog import clear_context
+# from pylog import get_logger
+
+# logger = get_logger("ContextTest")
+# with logger.context(request_id="req-123"):
+#     logger.info("Has context")
+
+#     with clear_context():
+#         logger.info("No context")
+
+#     logger.info("Context restored")
+
+# Async context capture
+from pylog import get_logger
+from pylog.handlers import AsyncHandler, FileHandler
+
+handler = AsyncHandler(
+    FileHandler("logs/context_async.log")
+)
+
+logger = get_logger(
+    "AsyncContext",
+    handlers=[handler],
+)
+
+with logger.context(request_id="req-123"):
+    logger.info("Message from request")
+
+logger.close()
