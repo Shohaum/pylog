@@ -1,16 +1,29 @@
 from __future__ import annotations
 from collections.abc import Iterable
 
+from .context import bind, clear_context, get_context
 from .filters import (
     Filter,
     FunctionFilter,
     LevelFilter,
     LoggerNameFilter,
 )
-from .handlers import Handler
+from .formatter import (
+    ColoredFormatter,
+    DefaultFormatter,
+    Formatter,
+    JsonFormatter,
+)
+from .handlers import (
+    AsyncHandler,
+    ConsoleHandler,
+    FileHandler,
+    Handler,
+    RotatingFileHandler,
+)
 from .levels import LogLevel
+from .logger import Logger
 from .manager import LoggerManager
-from .context import bind, clear_context, get_context
 
 _manager = LoggerManager()
 
@@ -26,7 +39,6 @@ def configure(
     Child loggers inherit the configuration unless they
     explicitly override it.
     """
-
     _manager.configure(
         level=level,
         handlers=handlers,
@@ -39,7 +51,10 @@ def get_logger(
     handlers: Iterable[Handler] | None = None,
     filters: Iterable[Filter] | None = None,
     propagate: bool = True,
-):
+) -> Logger:
+    """
+    Return a cached logger for the given name.
+    """
     return _manager.get_logger(
         name,
         level=level,
@@ -50,20 +65,39 @@ def get_logger(
 
 def shutdown() -> None:
     """
-    Gracefully shut down the logging system.
+    Gracefully shut down the global logging system.
     """
     _manager.clear()
 
-
 __all__ = [
+    # Core
+    "Logger",
+    "LoggerManager",
+    "LogLevel",
+    "get_logger",
+    "configure",
+    "shutdown",
+
+    # Handlers
+    "Handler",
+    "ConsoleHandler",
+    "FileHandler",
+    "RotatingFileHandler",
+    "AsyncHandler",
+
+    # Formatters
+    "Formatter",
+    "DefaultFormatter",
+    "JsonFormatter",
+    "ColoredFormatter",
+
+    # Filters
     "Filter",
-    "FunctionFilter",
     "LevelFilter",
     "LoggerNameFilter",
-    "LogLevel",
-    "configure",
-    "get_logger",
-    "shutdown",
+    "FunctionFilter",
+
+    # Context
     "bind",
     "clear_context",
     "get_context",

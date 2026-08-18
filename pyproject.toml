@@ -2,11 +2,15 @@
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "pylog"
-version = "1.0.0"
-description = "A lightweight and extensible logging library for Python."
+version = "3.0.0"
+
+description = "A lightweight, modern, and extensible logging library for Python."
+
 readme = "README.md"
+
 requires-python = ">=3.11"
 
 authors = [
@@ -21,28 +25,52 @@ keywords = [
     "python",
     "log",
     "library",
+    "structured logging",
+    "async logging",
 ]
+
 
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 
 dependencies = []
 
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+
 [project.urls]
 Homepage = "https://github.com/Shohaum/pylog"
 Repository = "https://github.com/Shohaum/pylog"
 Issues = "https://github.com/Shohaum/pylog/issues"
 
+
 [tool.setuptools]
 include-package-data = true
 
+
 [tool.setuptools.packages.find]
-include = ["pylog*"]
+include = [
+    "pylog*",
+]
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+
+addopts = "-q"
