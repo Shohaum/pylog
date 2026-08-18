@@ -154,6 +154,15 @@ class Logger:
         if level < self.effective_level:
             return
 
+        if not all(
+            filter_.pre_filter(
+                level=level,
+                logger_name=self._name,
+            )
+            for filter_ in self._filters
+        ):
+            return
+
         record = self._record_factory.create(
             level=level,
             logger_name=self._name,

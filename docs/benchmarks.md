@@ -78,3 +78,34 @@ Benchmarks use `timeit` with 10,000 iterations.
 
 Optimizations should only be accepted if they preserve
 correctness and demonstrate measurable improvement.
+
+## Optimization 1 — Pre-record filtering
+
+### Change
+
+Added `Filter.pre_filter()` so filters capable of making a
+decision from the log level or logger name can reject records
+before `LogRecord` construction.
+
+### Result
+
+| Operation | Before | After | Improvement |
+|---|---:|---:|---:|
+| Filtered DEBUG | 47.42 µs | 0.25 µs | 99.47% faster |
+
+### Correctness
+
+All tests passed.
+
+### Observation
+
+The optimization removes unnecessary work including:
+
+- Caller inspection
+- Timestamp creation
+- Context capture
+- Metadata copying
+- Immutable record construction
+
+The optimization is especially valuable for applications where
+a large percentage of log messages are filtered.

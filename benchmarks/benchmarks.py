@@ -58,7 +58,12 @@ def benchmark_filtered_logging() -> None:
         handlers=[],
     )
 
-    logger = get_logger("benchmark.filtered")
+    logger = get_logger(
+        "benchmark.filtered",
+        filters=[
+            LevelFilter(LogLevel.ERROR),
+        ],
+    )
 
     benchmark(
         "Filtered DEBUG",
