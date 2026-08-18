@@ -10,7 +10,7 @@ from .record_factory import LogRecordFactory
 
 class LoggerManager:
     """
-    Creates and manages a hierarchy of Logger instances.
+    Creates and manages the logger hierarchy and global configuration.
     """
 
     __slots__ = (
@@ -44,6 +44,42 @@ class LoggerManager:
         )
 
         self._loggers: dict[str, Logger] = {}
+
+    @property
+    def root(self) -> Logger:
+        return self._root
+
+    def configure(
+        self,
+        *,
+        level: LogLevel | None = None,
+        handlers: Iterable[Handler] | None = None,
+    ) -> None:
+        """
+        Configure the root logger.
+
+        Configuration applies to loggers that inherit their
+        level and handlers through the hierarchy.
+        """
+
+        if level is not None:
+            self._root.level = level
+
+        if handlers is not None:
+            self._replace_root_handlers(handlers)
+
+    def _replace_root_handlers(
+        self,
+        handlers: Iterable[Handler],
+    ) -> None:
+        new_handlers = list(handlers)
+
+        old_handlers = self._root.handlers
+
+        self._root.set_handlers(new_handlers)
+
+        for handler in old_handlers:
+            handler.close()
 
     def get_logger(
         self,
@@ -89,16 +125,6 @@ class LoggerManager:
         return logger
 
     def _find_parent(self, name: str) -> Logger:
-        """
-        Find the nearest existing ancestor.
-
-        Example:
-
-            app.api.auth
-            app.api exists
-            -> app.api becomes parent
-        """
-
         parts = name.split(".")
 
         for index in range(len(parts) - 1, 0, -1):
@@ -112,11 +138,6 @@ class LoggerManager:
         return self._root
 
     def _reparent_children(self, logger: Logger) -> None:
-        """
-        Reparent existing loggers whose nearest ancestor is now
-        the newly-created logger.
-        """
-
         for child in self._loggers.values():
             if child is logger:
                 continue
@@ -133,7 +154,7 @@ class LoggerManager:
 
     def clear(self) -> None:
         """
-        Close all handlers and remove all managed loggers.
+        Close all loggers and reset the manager.
         """
 
         for logger in self._loggers.values():

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from collections.abc import Iterable
 
 from .filters import (
@@ -12,9 +11,25 @@ from .handlers import Handler
 from .levels import LogLevel
 from .manager import LoggerManager
 
-
 _manager = LoggerManager()
 
+def configure(
+    *,
+    level: LogLevel | None = None,
+    handlers: Iterable[Handler] | None = None,
+) -> None:
+    """
+    Configure the global logging system.
+
+    Configuration is applied to the root logger.
+    Child loggers inherit the configuration unless they
+    explicitly override it.
+    """
+
+    _manager.configure(
+        level=level,
+        handlers=handlers,
+    )
 
 def get_logger(
     name: str,
@@ -22,15 +37,21 @@ def get_logger(
     level: LogLevel | None = None,
     handlers: Iterable[Handler] | None = None,
     filters: Iterable[Filter] | None = None,
-    propagate: bool = True
+    propagate: bool = True,
 ):
     return _manager.get_logger(
         name,
         level=level,
         handlers=handlers,
         filters=filters,
-        propagate=propagate
+        propagate=propagate,
     )
+
+def shutdown() -> None:
+    """
+    Gracefully shut down the logging system.
+    """
+    _manager.clear()
 
 
 __all__ = [
@@ -39,5 +60,7 @@ __all__ = [
     "LevelFilter",
     "LoggerNameFilter",
     "LogLevel",
+    "configure",
     "get_logger",
+    "shutdown",
 ]

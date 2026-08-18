@@ -501,17 +501,96 @@
 # child.close()
 
 # Full hierarchy
-from pylog import get_logger
+# from pylog import get_logger
 
-root = get_logger("myapp")
-api = get_logger("myapp.api")
-auth = get_logger("myapp.api.auth")
-payments = get_logger("myapp.api.payments")
-worker = get_logger("myapp.worker")
+# root = get_logger("myapp")
+# api = get_logger("myapp.api")
+# auth = get_logger("myapp.api.auth")
+# payments = get_logger("myapp.api.payments")
+# worker = get_logger("myapp.worker")
 
-assert api.parent is root
-assert auth.parent is api
-assert payments.parent is api
-assert worker.parent is root
+# assert api.parent is root
+# assert auth.parent is api
+# assert payments.parent is api
+# assert worker.parent is root
 
-print("Full hierarchy passed")
+# print("Full hierarchy passed")
+
+# Global level configuration
+# from pylog import configure, get_logger
+# from pylog.levels import LogLevel
+
+
+# configure(
+#     level=LogLevel.WARNING,
+# )
+
+# logger = get_logger("app.api")
+
+# assert logger.effective_level == LogLevel.WARNING
+
+# logger.info("Should NOT appear")
+# logger.warning("Should appear")
+# logger.error("Should appear")
+
+# Global handlers
+# from pathlib import Path
+
+# from pylog import configure, get_logger
+# from pylog.handlers import FileHandler
+
+# path = Path("logs/config.log")
+
+# if path.exists():
+#     path.unlink()
+
+# configure(
+#     handlers=[
+#         FileHandler(path),
+#     ],
+# )
+
+# logger = get_logger("app.api.auth")
+
+# logger.info("Configuration works")
+
+# logger.close()
+
+# assert "Configuration works" in path.read_text()
+
+# Child override
+# from pylog import configure, get_logger
+# from pylog.levels import LogLevel
+
+# configure(
+#     level=LogLevel.WARNING,
+# )
+
+# logger = get_logger(
+#     "app.debug",
+#     level=LogLevel.DEBUG,
+# )
+
+# assert logger.effective_level == LogLevel.DEBUG
+
+# Reconfiguration
+# from pylog import configure, get_logger
+# from pylog.levels import LogLevel
+# configure(
+#     level=LogLevel.ERROR,
+# )
+
+# logger = get_logger("app.api")
+
+# assert logger.effective_level == LogLevel.ERROR
+
+# configure(
+#     level=LogLevel.DEBUG,
+# )
+
+# assert logger.effective_level == LogLevel.DEBUG
+
+# Shutdown
+from pylog import shutdown
+
+shutdown()

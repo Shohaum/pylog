@@ -118,11 +118,18 @@ class Logger:
     def propagate(self, value: bool) -> None:
         self._propagate = value
 
+    @property
+    def handlers(self) -> tuple[Handler, ...]:
+        return tuple(self._handlers)
+
     def add_handler(self, handler: Handler) -> None:
         self._handlers.append(handler)
 
     def remove_handler(self, handler: Handler) -> None:
         self._handlers.remove(handler)
+
+    def set_handlers(self, handlers: Iterable[Handler]) -> None:
+        self._handlers = list(handlers)
 
     def add_filter(self, filter_: Filter) -> None:
         self._filters.append(filter_)
