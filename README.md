@@ -2,32 +2,40 @@
 
 A lightweight, modern, and extensible logging library for Python.
 
-`pylog` is built from scratch with a focus on clean architecture, immutability, thread safety, structured logging, and extensibility. It provides a simple API while keeping the internal design modular and easy to extend.
+`pylog` is built from scratch with a focus on clean architecture, immutable log records, thread safety, structured logging, asynchronous processing, and extensibility.
 
-> **Current Version:** v2.0
+> **Current Version:** v3.0.0
 
 ---
 
 ## Features
 
-* Simple API with `get_logger()`
-* Immutable log records
-* Multiple log levels
-* Console logging
-* File logging
-* Thread-safe handlers
-* Asynchronous logging
-* Rotating file logging
-* Exception logging with tracebacks
-* Structured logging with `extra`
-* Context-aware logging
-* JSON formatting
-* Colored console output
-* Multiple handlers per logger
-* UTC timestamps
-* Caller information
-* Cached logger instances
-* Extensible formatter architecture
+- Simple API with `get_logger()`
+- Global logging configuration
+- Logger hierarchy and propagation
+- Immutable log records
+- Six log levels
+- Console logging
+- File logging
+- Rotating file logging
+- Asynchronous logging
+- Thread-safe handlers
+- Exception logging with immutable traceback snapshots
+- Structured logging with `extra`
+- Context-aware logging using `ContextVar`
+- JSON formatting
+- Colored console output
+- Automatic TTY-aware colored output
+- Multiple handlers per logger
+- Multiple formatters
+- Custom filters
+- Pre-record filtering for inexpensive rejection
+- UTC timestamps
+- Caller information
+- Cached logger instances
+- Graceful shutdown
+- Extensible formatter and handler architecture
+- Performance benchmarks
 
 ---
 
@@ -37,14 +45,19 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/Shohaum/pylog.git
-
 cd pylog
 ```
 
 Install in editable mode:
 
 ```bash
-pip install -e .
+python -m pip install -e .
+```
+
+For development:
+
+```bash
+python -m pip install -e ".[dev]"
 ```
 
 ---
@@ -61,10 +74,10 @@ logger.warning("Disk space is running low")
 logger.error("Something went wrong")
 ```
 
-Output:
+Example output:
 
 ```text
-2026-08-16 15:40:18.848358 UTC [INFO] [App] Application started (/path/to/main.py:6)
+2026-08-22 11:20:18.848358 UTC [INFO] [App] Application started (/path/to/main.py:6)
 ```
 
 ---
@@ -97,7 +110,68 @@ logger.debug("Debug information")
 logger.info("Application started")
 ```
 
-Messages below the configured level are ignored.
+Messages below the configured effective level are ignored.
+
+---
+
+## Global Configuration
+
+Applications can configure the logging system once and allow child loggers to inherit the configuration.
+
+```python
+from pylog import configure, get_logger
+from pylog.handlers import ConsoleHandler, FileHandler
+from pylog.levels import LogLevel
+
+configure(
+    level=LogLevel.INFO,
+    handlers=[
+        ConsoleHandler(),
+        FileHandler("logs/app.log"),
+    ],
+)
+
+logger = get_logger("App.API")
+
+logger.info("Request started")
+```
+
+Individual loggers can still override the inherited level, handlers, filters, or propagation behavior.
+
+---
+
+## Logger Hierarchy
+
+Logger names form a hierarchy using `.` as the separator.
+
+```python
+from pylog import get_logger
+
+app = get_logger("app")
+api = get_logger("app.api")
+auth = get_logger("app.api.auth")
+```
+
+The resulting hierarchy is:
+
+```text
+app
+├── api
+│   └── auth
+```
+
+Child loggers inherit configuration from their parents unless explicitly overridden.
+
+By default, records propagate toward the root logger.
+
+```python
+logger = get_logger(
+    "app.api.auth",
+    propagate=False,
+)
+```
+
+This disables propagation for that logger.
 
 ---
 
@@ -115,21 +189,22 @@ except Exception as exc:
     )
 ```
 
-Output:
+Example output:
 
 ```text
-2026-08-16 15:40:18.848358 UTC [ERROR] [App] Division failed (/path/to/main.py:12)
-
+2026-08-22 11:20:18.848358 UTC [ERROR] [App] Division failed (/path/to/main.py:12)
 Traceback (most recent call last):
 ...
 ZeroDivisionError: division by zero
 ```
 
+The logging system does not retain live traceback frames and their local variables.
+
 ---
 
 ## Structured Logging
 
-Additional structured data can be attached to individual log records using `extra`.
+Additional structured data can be attached to individual records using `extra`.
 
 ```python
 logger.info(
@@ -141,13 +216,13 @@ logger.info(
 )
 ```
 
-The metadata is stored as an immutable snapshot and can be consumed by different formatters.
+The metadata is captured as an immutable snapshot when the `LogRecord` is created.
 
 ---
 
 ## Logging Context
 
-Context can be attached to all log records created within a scope.
+Context can be attached to all records created within a scope.
 
 ```python
 with logger.context(
@@ -162,11 +237,10 @@ with logger.context(
 The resulting records automatically contain:
 
 ```text
-request_id=req-123
-user_id=42
+request_id='req-123' user_id=42
 ```
 
-Contexts can also be nested:
+Contexts can be nested:
 
 ```python
 with logger.context(request_id="req-123"):
@@ -178,7 +252,20 @@ with logger.context(request_id="req-123"):
     logger.info("Request completed")
 ```
 
-Context is implemented using Python's `ContextVar`, allowing it to work correctly with concurrent execution contexts.
+The inner context inherits the outer context.
+
+Context is implemented using Python's `ContextVar`, making it suitable for concurrent execution contexts.
+
+The context is captured when the `LogRecord` is created, so asynchronous handlers do not depend on the context of the originating thread.
+
+You can also use the context API directly:
+
+```python
+from pylog import bind, clear_context, get_context
+
+with bind(request_id="req-123"):
+    ...
+```
 
 ---
 
@@ -188,14 +275,17 @@ Context is implemented using Python's `ContextVar`, allowing it to work correctl
 from pylog import get_logger
 from pylog.handlers import FileHandler
 
-logger = get_logger("App")
-
-logger.add_handler(
-    FileHandler("logs/app.log")
+logger = get_logger(
+    "App",
+    handlers=[
+        FileHandler("logs/app.log"),
+    ],
 )
 
 logger.info("Written to file")
 ```
+
+`FileHandler` creates the parent directory when necessary and flushes each record after writing.
 
 ---
 
@@ -239,7 +329,7 @@ The newest rotated file is always `.1`.
 
 ## Asynchronous Logging
 
-`AsyncHandler` moves formatting and output processing to a background worker thread.
+`AsyncHandler` processes another handler in a background worker thread.
 
 ```python
 from pylog import get_logger
@@ -254,14 +344,40 @@ logger = get_logger(
     handlers=[handler],
 )
 
-logger.info("This is processed asynchronously")
+logger.info("Processed asynchronously")
 
 logger.close()
 ```
 
-The application thread places the immutable `LogRecord` into a queue while the worker thread performs the actual handler processing.
+The application thread creates the immutable `LogRecord` and places it into a queue. The worker thread performs formatting and output processing.
 
 `close()` performs a graceful shutdown and waits for queued records to be processed.
+
+### Why asynchronous logging?
+
+Async logging is particularly useful when the logging destination is slow.
+
+The application path becomes:
+
+```text
+Application thread
+      │
+      ▼
+LogRecord
+      │
+      ▼
+Queue
+      │
+      └──────────────► return
+                       │
+                       ▼
+                 Worker thread
+                       │
+                       ▼
+                  Format + I/O
+```
+
+The I/O work is not eliminated; it is moved away from the application thread.
 
 ---
 
@@ -278,8 +394,8 @@ logger = get_logger(
     "API",
     handlers=[
         ConsoleHandler(
-            formatter=JsonFormatter()
-        )
+            formatter=JsonFormatter(),
+        ),
     ],
 )
 
@@ -294,21 +410,21 @@ Example output:
 
 ```json
 {
-    "timestamp": "2026-08-16T15:40:18.848358+00:00",
-    "level": "INFO",
-    "logger": "API",
-    "message": "Request started",
-    "process_id": 12345,
-    "thread_id": 123456,
-    "extra": {
-        "request_id": "req-123",
-        "user_id": 42
-    },
-    "caller": {
-        "file": "/path/to/main.py",
-        "function": "<module>",
-        "line": 12
-    }
+  "timestamp": "2026-08-22T11:20:18.848358+00:00",
+  "level": "INFO",
+  "logger": "API",
+  "message": "Request started",
+  "process_id": 12345,
+  "thread_id": 123456,
+  "extra": {
+    "request_id": "req-123",
+    "user_id": 42
+  },
+  "caller": {
+    "file": "/path/to/main.py",
+    "function": "<module>",
+    "line": 12
+  }
 }
 ```
 
@@ -316,7 +432,7 @@ Example output:
 
 ## Colored Console Output
 
-`ColoredFormatter` provides ANSI-colored output based on the log level.
+`ColoredFormatter` provides ANSI-colored output based on log level.
 
 ```python
 from pylog import get_logger
@@ -327,8 +443,8 @@ logger = get_logger(
     "App",
     handlers=[
         ConsoleHandler(
-            formatter=ColoredFormatter()
-        )
+            formatter=ColoredFormatter(),
+        ),
     ],
 )
 
@@ -339,7 +455,7 @@ logger.error("Database timeout")
 logger.critical("System failure")
 ```
 
-> Currently, `ColoredFormatter` should be used with terminal output. Automatic TTY detection is planned for V3.
+`ColoredFormatter` automatically detects whether the output stream is a TTY and only emits ANSI color codes when appropriate.
 
 ---
 
@@ -350,10 +466,7 @@ A logger can send the same record to multiple handlers.
 ```python
 from pylog import get_logger
 from pylog.formatter import JsonFormatter
-from pylog.handlers import (
-    ConsoleHandler,
-    FileHandler,
-)
+from pylog.handlers import ConsoleHandler, FileHandler
 
 logger = get_logger(
     "App",
@@ -373,25 +486,79 @@ Each handler can have its own formatter and output destination.
 
 ---
 
-## Project Structure
+## Filters
+
+Filters can determine whether a record should be emitted.
+
+```python
+from pylog import get_logger
+from pylog.filters import LevelFilter
+from pylog.levels import LogLevel
+
+logger = get_logger(
+    "App",
+    filters=[
+        LevelFilter(LogLevel.WARNING),
+    ],
+)
+
+logger.info("Ignored")
+logger.warning("Allowed")
+logger.error("Allowed")
+```
+
+`pylog` includes:
+
+- `Filter`
+- `LevelFilter`
+- `LoggerNameFilter`
+- `FunctionFilter`
+
+Filters that can make a decision from inexpensive information can reject a message before `LogRecord` construction.
+
+This avoids unnecessary caller inspection, context capture, and record creation.
+
+---
+
+## Handlers
+
+The built-in handlers are:
 
 ```text
-pylog/
-│
-├── __init__.py
-├── _internal.py
-├── caller_info.py
-├── context.py
-├── exception_info.py
-├── formatter.py
-├── handlers.py
-├── levels.py
-├── logger.py
-├── manager.py
-├── record.py
-├── record_factory.py
-└── utils/
-    └── immutable.py
+Handler
+├── ConsoleHandler
+├── FileHandler
+├── RotatingFileHandler
+└── AsyncHandler
+```
+
+Handlers are thread-safe and responsible for output processing.
+
+Custom handlers can be created by subclassing `Handler` and implementing `write()`.
+
+---
+
+## Formatters
+
+The built-in formatters are:
+
+```text
+Formatter
+├── DefaultFormatter
+├── JsonFormatter
+└── ColoredFormatter
+```
+
+Formatters are responsible only for converting a `LogRecord` into its output representation.
+
+Custom formatters can be created by implementing:
+
+```python
+from pylog.formatter import Formatter
+
+class MyFormatter(Formatter):
+    def format(self, record):
+        return record.message
 ```
 
 ---
@@ -406,6 +573,9 @@ Application
      ▼
    Logger
      │
+     ├── Level check
+     ├── Pre-record filters
+     │
      ▼
 LogRecordFactory
      │
@@ -418,63 +588,214 @@ LogRecordFactory
  LogRecord
      │
      ▼
-  Handler
+   Filters
+     │
+     ▼
+  Handlers
      │
      ├── ConsoleHandler
      ├── FileHandler
-     ├── AsyncHandler
-     └── RotatingFileHandler
+     ├── RotatingFileHandler
+     └── AsyncHandler
      │
      ▼
- Formatter
+ Formatters
      │
      ├── DefaultFormatter
      ├── JsonFormatter
      └── ColoredFormatter
+     │
+     ▼
+   Destination
 ```
 
-The `LogRecord` is immutable and contains all information necessary for downstream processing.
+The `LogRecord` is immutable and contains the historical information needed by downstream processing.
+
+The asynchronous handler preserves this property by queuing the already-created record rather than reconstructing logging context later.
 
 ---
 
 ## Design Principles
 
-This project follows a few core principles:
+The project follows these principles:
 
-* Single Responsibility Principle
-* Immutable log records
-* Separation of concerns
-* Composition over inheritance
-* Explicit dependencies
-* Thread-safe handlers
-* Structured data over formatted strings
-* Minimal public API
-* Extensible architecture
-* Standard-library primitives where appropriate
+- Single Responsibility Principle
+- Immutable log records
+- Separation of concerns
+- Composition over inheritance
+- Explicit dependencies
+- Thread-safe handlers
+- Structured data over formatted strings
+- Cheap rejection before expensive work
+- Minimal public API
+- Extensible architecture
+- Standard-library primitives where appropriate
+- Measure before optimizing
 
 ---
 
-## Roadmap
+## Performance
 
-### V3
+Performance is measured using a dedicated benchmark suite with 10,000 iterations.
 
-* Automatic TTY detection for `ColoredFormatter`
-* Logging filters
-* Handler-level filtering
-* Logger hierarchy
-* Improved configuration system
-* Context propagation improvements
-* Expanded test suite
-* Performance benchmarks
-* Packaging and PyPI readiness
+Baseline results on the development machine:
 
-### Future
+| Operation | Per operation |
+|---|---:|
+| Record creation | 27.28 µs |
+| Filtered DEBUG | 0.25 µs |
+| JSON formatting | 2.23 µs |
+| File logging | 51.50 µs |
+| Async logging | 67.74 µs |
+| Context logging | 48.51 µs |
 
-* Time-based rotating files
-* Log compression
-* Remote logging
-* OpenTelemetry integration
-* Additional structured logging features
+### Pre-record filtering
+
+Before optimization, rejected DEBUG messages took approximately `47.42 µs/op`.
+
+After adding pre-record filtering:
+
+```text
+47.42 µs/op → 0.25 µs/op
+```
+
+This represents approximately **99.47% lower latency** for that rejection path.
+
+### Asynchronous logging
+
+A benchmark using a deliberately slow handler demonstrated the intended purpose of `AsyncHandler`.
+
+With a 1 ms delay per write:
+
+| Metric | Synchronous | Asynchronous |
+|---|---:|---:|
+| Application time | 1.5964 s | 0.0845 s |
+| Per operation | 1596.38 µs | 84.46 µs |
+
+This reduced application-thread logging time by approximately **94.7%**.
+
+The underlying I/O work still occurs; asynchronous logging moves it to the worker thread.
+
+See [`benchmark.md`](benchmark.md) for methodology and optimization history.
+
+---
+
+## Project Structure
+
+```text
+pylog/
+│
+├── pylog/
+│   ├── __init__.py
+│   ├── _internal.py
+│   ├── caller_info.py
+│   ├── context.py
+│   ├── exception_info.py
+│   ├── filters.py
+│   ├── formatter.py
+│   ├── handlers.py
+│   ├── levels.py
+│   ├── logger.py
+│   ├── manager.py
+│   ├── record.py
+│   ├── record_factory.py
+│   └── utils/
+│       └── immutable.py
+│
+├── benchmarks/
+│   ├── benchmarks.py
+│   └── slow_handler.py
+│
+├── tests/
+│
+├── docs/
+│   ├── benchmarks.md
+│   └── architecture.md
+├── README.md
+├── pyproject.toml
+└── .gitignore
+```
+
+---
+
+## Development
+
+Create a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the project with development dependencies:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+Run the test suite:
+
+```bash
+pytest
+```
+
+Run the benchmarks:
+
+```bash
+python3 -m benchmarks.benchmarks
+```
+
+---
+
+## Public API
+
+The primary API is intentionally small:
+
+```python
+from pylog import (
+    configure,
+    get_logger,
+    shutdown,
+)
+```
+
+Advanced functionality is available through handlers, formatters, filters, and context utilities.
+
+```python
+from pylog import (
+    AsyncHandler,
+    ColoredFormatter,
+    FileHandler,
+    LevelFilter,
+    RotatingFileHandler,
+)
+```
+
+---
+
+## Versioning
+
+The project follows semantic versioning.
+
+Current release:
+
+```text
+3.0.0
+```
+
+---
+
+## Future
+
+Potential future features include:
+
+- Time-based rotating files
+- Log compression
+- Remote logging
+- OpenTelemetry integration
+- Additional structured logging features
+- More advanced configuration
+- Metrics and observability integrations
 
 ---
 
