@@ -363,18 +363,18 @@ The application path becomes:
 Application thread
       │
       ▼
-LogRecord
+  LogRecord
       │
       ▼
-Queue
+    Queue
       │
       └──────────────► return
-                       │
-                       ▼
-                 Worker thread
-                       │
-                       ▼
-                  Format + I/O
+                         │
+                         ▼
+                   Worker thread
+                         │
+                         ▼
+                    Format + I/O
 ```
 
 The I/O work is not eliminated; it is moved away from the application thread.
