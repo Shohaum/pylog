@@ -1,9 +1,9 @@
-# pylog Architecture
+# xylog Architecture
 
 > **A logging library should make the easy path simple without making
 > the internal design simplistic.**
 
-`pylog` is built around a small number of strict boundaries:
+`xylog` is built around a small number of strict boundaries:
 
 -   log events are immutable
 -   record creation is isolated
@@ -424,7 +424,7 @@ Everything after this boundary can safely share the same record.
 # 17. Package responsibilities
 
 ``` text
-pylog/
+xylog/
 │
 ├── __init__.py          Public API
 ├── levels.py            Log severity definitions

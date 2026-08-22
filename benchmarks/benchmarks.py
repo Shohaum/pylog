@@ -4,14 +4,14 @@ import timeit
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from pylog import configure, get_logger, shutdown
-from pylog.filters import LevelFilter
-from pylog.formatter import JsonFormatter
-from pylog.handlers import (
+from xylog import configure, get_logger, shutdown
+from xylog.filters import LevelFilter
+from xylog.formatter import JsonFormatter
+from xylog.handlers import (
     AsyncHandler,
     FileHandler,
 )
-from pylog.levels import LogLevel
+from xylog.levels import LogLevel
 
 
 ITERATIONS = 10_000
@@ -40,8 +40,8 @@ def benchmark(
 
 
 def benchmark_record_creation() -> None:
-    from pylog.caller_info import CallerInspector
-    from pylog.record_factory import LogRecordFactory
+    from xylog.caller_info import CallerInspector
+    from xylog.record_factory import LogRecordFactory
 
     factory = LogRecordFactory(
         CallerInspector()

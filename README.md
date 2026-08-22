@@ -1,8 +1,8 @@
-# pylog
+# xylog
 
 A lightweight, modern, and extensible logging library for Python.
 
-`pylog` is built from scratch with a focus on clean architecture, immutable log records, thread safety, structured logging, asynchronous processing, and extensibility.
+`xylog` is built from scratch with a focus on clean architecture, immutable log records, thread safety, structured logging, asynchronous processing, and extensibility.
 
 > **Current Version:** v3.0.0
 
@@ -44,8 +44,8 @@ A lightweight, modern, and extensible logging library for Python.
 Clone the repository:
 
 ```bash
-git clone https://github.com/Shohaum/pylog.git
-cd pylog
+git clone https://github.com/Shohaum/xylog.git
+cd xylog
 ```
 
 Install in editable mode:
@@ -65,7 +65,7 @@ python -m pip install -e ".[dev]"
 ## Quick Start
 
 ```python
-from pylog import get_logger
+from xylog import get_logger
 
 logger = get_logger("App")
 
@@ -84,7 +84,7 @@ Example output:
 
 ## Log Levels
 
-`pylog` provides six log levels:
+`xylog` provides six log levels:
 
 ```text
 TRACE
@@ -98,8 +98,8 @@ CRITICAL
 The default level is `INFO`.
 
 ```python
-from pylog import get_logger
-from pylog.levels import LogLevel
+from xylog import get_logger
+from xylog.levels import LogLevel
 
 logger = get_logger(
     "App",
@@ -119,9 +119,9 @@ Messages below the configured effective level are ignored.
 Applications can configure the logging system once and allow child loggers to inherit the configuration.
 
 ```python
-from pylog import configure, get_logger
-from pylog.handlers import ConsoleHandler, FileHandler
-from pylog.levels import LogLevel
+from xylog import configure, get_logger
+from xylog.handlers import ConsoleHandler, FileHandler
+from xylog.levels import LogLevel
 
 configure(
     level=LogLevel.INFO,
@@ -145,7 +145,7 @@ Individual loggers can still override the inherited level, handlers, filters, or
 Logger names form a hierarchy using `.` as the separator.
 
 ```python
-from pylog import get_logger
+from xylog import get_logger
 
 app = get_logger("app")
 api = get_logger("app.api")
@@ -261,7 +261,7 @@ The context is captured when the `LogRecord` is created, so asynchronous handler
 You can also use the context API directly:
 
 ```python
-from pylog import bind, clear_context, get_context
+from xylog import bind, clear_context, get_context
 
 with bind(request_id="req-123"):
     ...
@@ -272,8 +272,8 @@ with bind(request_id="req-123"):
 ## File Logging
 
 ```python
-from pylog import get_logger
-from pylog.handlers import FileHandler
+from xylog import get_logger
+from xylog.handlers import FileHandler
 
 logger = get_logger(
     "App",
@@ -294,8 +294,8 @@ logger.info("Written to file")
 `RotatingFileHandler` automatically rotates the log file when it reaches a configured size.
 
 ```python
-from pylog import get_logger
-from pylog.handlers import RotatingFileHandler
+from xylog import get_logger
+from xylog.handlers import RotatingFileHandler
 
 handler = RotatingFileHandler(
     "logs/app.log",
@@ -332,8 +332,8 @@ The newest rotated file is always `.1`.
 `AsyncHandler` processes another handler in a background worker thread.
 
 ```python
-from pylog import get_logger
-from pylog.handlers import AsyncHandler, FileHandler
+from xylog import get_logger
+from xylog.handlers import AsyncHandler, FileHandler
 
 handler = AsyncHandler(
     FileHandler("logs/app.log")
@@ -386,9 +386,9 @@ The I/O work is not eliminated; it is moved away from the application thread.
 Use `JsonFormatter` when logs need to be consumed by log aggregation or monitoring systems.
 
 ```python
-from pylog import get_logger
-from pylog.formatter import JsonFormatter
-from pylog.handlers import ConsoleHandler
+from xylog import get_logger
+from xylog.formatter import JsonFormatter
+from xylog.handlers import ConsoleHandler
 
 logger = get_logger(
     "API",
@@ -435,9 +435,9 @@ Example output:
 `ColoredFormatter` provides ANSI-colored output based on log level.
 
 ```python
-from pylog import get_logger
-from pylog.formatter import ColoredFormatter
-from pylog.handlers import ConsoleHandler
+from xylog import get_logger
+from xylog.formatter import ColoredFormatter
+from xylog.handlers import ConsoleHandler
 
 logger = get_logger(
     "App",
@@ -464,9 +464,9 @@ logger.critical("System failure")
 A logger can send the same record to multiple handlers.
 
 ```python
-from pylog import get_logger
-from pylog.formatter import JsonFormatter
-from pylog.handlers import ConsoleHandler, FileHandler
+from xylog import get_logger
+from xylog.formatter import JsonFormatter
+from xylog.handlers import ConsoleHandler, FileHandler
 
 logger = get_logger(
     "App",
@@ -491,9 +491,9 @@ Each handler can have its own formatter and output destination.
 Filters can determine whether a record should be emitted.
 
 ```python
-from pylog import get_logger
-from pylog.filters import LevelFilter
-from pylog.levels import LogLevel
+from xylog import get_logger
+from xylog.filters import LevelFilter
+from xylog.levels import LogLevel
 
 logger = get_logger(
     "App",
@@ -507,7 +507,7 @@ logger.warning("Allowed")
 logger.error("Allowed")
 ```
 
-`pylog` includes:
+`xylog` includes:
 
 - `Filter`
 - `LevelFilter`
@@ -554,7 +554,7 @@ Formatters are responsible only for converting a `LogRecord` into its output rep
 Custom formatters can be created by implementing:
 
 ```python
-from pylog.formatter import Formatter
+from xylog.formatter import Formatter
 
 class MyFormatter(Formatter):
     def format(self, record):
@@ -676,16 +676,16 @@ This reduced application-thread logging time by approximately **94.7%**.
 
 The underlying I/O work still occurs; asynchronous logging moves it to the worker thread.
 
-See [`benchmark.md`](https://github.com/Shohaum/pylog/blob/v3/main/docs/benchmarks.md) for methodology and optimization history.
+See [`benchmark.md`](https://github.com/Shohaum/xylog/blob/v3/main/docs/benchmarks.md) for methodology and optimization history.
 
 ---
 
 ## Project Structure
 
 ```text
-pylog/
+xylog/
 │
-├── pylog/
+├── xylog/
 │   ├── __init__.py
 │   ├── _internal.py
 │   ├── caller_info.py
@@ -752,7 +752,7 @@ python3 -m benchmarks.benchmarks
 The primary API is intentionally small:
 
 ```python
-from pylog import (
+from xylog import (
     configure,
     get_logger,
     shutdown,
@@ -762,7 +762,7 @@ from pylog import (
 Advanced functionality is available through handlers, formatters, filters, and context utilities.
 
 ```python
-from pylog import (
+from xylog import (
     AsyncHandler,
     ColoredFormatter,
     FileHandler,

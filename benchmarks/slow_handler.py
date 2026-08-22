@@ -1,7 +1,7 @@
 from __future__ import annotations
 import time
 
-from pylog.handlers import Handler
+from xylog.handlers import Handler
 
 class SlowHandler(Handler):
     """

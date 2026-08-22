@@ -1,8 +1,8 @@
-# pylog Performance Benchmarks
+# xylog Performance Benchmarks
 
 > **Performance is a feature. Measurement is part of the design.**
 
-This document records the performance characteristics of `pylog` as the
+This document records the performance characteristics of `xylog` as the
 library evolves. The goal is not to chase arbitrary microbenchmark
 numbers, but to understand where time is spent, validate architectural
 decisions, and make performance changes measurable and reproducible.
@@ -14,7 +14,7 @@ decisions, and make performance changes measurable and reproducible.
   Python                 3.13.14
   OS                     macOS
   Architecture           arm64
-  pylog version          v3.0
+  xylog version          v3.0
   Benchmark iterations   10,000
 
 Numbers are machine-dependent. Their primary purpose is comparison on

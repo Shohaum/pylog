@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from pylog import get_logger
-from pylog.formatter import JsonFormatter
-from pylog.handlers import (
+from xylog import get_logger
+from xylog.formatter import JsonFormatter
+from xylog.handlers import (
     AsyncHandler,
     FileHandler,
     RotatingFileHandler,

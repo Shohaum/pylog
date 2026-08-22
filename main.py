@@ -1,5 +1,5 @@
 # Logger interface
-# from pylog import get_logger
+# from xylog import get_logger
 
 # logger = get_logger("Demo")
 
@@ -21,7 +21,7 @@
 #     )
 
 # Logger Cache
-# from pylog import get_logger
+# from xylog import get_logger
 
 # logger1 = get_logger("Auth")
 # logger2 = get_logger("Auth")
@@ -35,8 +35,8 @@
 # print(logger1 is logger2)
 
 # Log Level Filtering
-# from pylog import get_logger
-# from pylog.levels import LogLevel
+# from xylog import get_logger
+# from xylog.levels import LogLevel
 
 # logger = get_logger("Demo")
 
@@ -49,8 +49,8 @@
 # logger.error("Visible")
 
 # File Handler
-# from pylog import get_logger
-# from pylog.handlers import FileHandler
+# from xylog import get_logger
+# from xylog.handlers import FileHandler
 
 # logger = get_logger("FileLogger")
 
@@ -72,7 +72,7 @@
 # Thread Safety
 # import threading
 
-# from pylog import get_logger
+# from xylog import get_logger
 
 # logger = get_logger("Threads")
 
@@ -94,8 +94,8 @@
 #     t.join()
 
 # Multiple Handlers
-# from pylog import get_logger
-# from pylog.handlers import FileHandler
+# from xylog import get_logger
+# from xylog.handlers import FileHandler
 
 # logger = get_logger("Demo")
 
@@ -106,9 +106,9 @@
 # logger.info("Hello")
 
 # Json logging
-# from pylog import get_logger
-# from pylog.formatter import JsonFormatter
-# from pylog.handlers import ConsoleHandler
+# from xylog import get_logger
+# from xylog.formatter import JsonFormatter
+# from xylog.handlers import ConsoleHandler
 
 # logger = get_logger(
 #     "API",
@@ -126,8 +126,8 @@
 #     logger.info("Request started")
 
 # Async logging
-# from pylog import get_logger
-# from pylog.handlers import AsyncHandler, FileHandler
+# from xylog import get_logger
+# from xylog.handlers import AsyncHandler, FileHandler
 
 # handler = AsyncHandler(
 #     FileHandler("logs/async.log")
@@ -144,8 +144,8 @@
 # logger.close()
 
 # Rotating file handling
-# from pylog import get_logger
-# from pylog.handlers import RotatingFileHandler
+# from xylog import get_logger
+# from xylog.handlers import RotatingFileHandler
 
 # handler = RotatingFileHandler(
 #     "logs/rotation.log",
@@ -166,9 +166,9 @@
 # logger.close()
 
 # Color output in the terminal
-# from pylog import get_logger
-# from pylog.formatter import ColoredFormatter
-# from pylog.handlers import ConsoleHandler
+# from xylog import get_logger
+# from xylog.formatter import ColoredFormatter
+# from xylog.handlers import ConsoleHandler
 
 # logger = get_logger(
 #     "API",
@@ -186,9 +186,9 @@
 # logger.critical("System failure")
 
 # Integration testing
-# from pylog import get_logger
-# from pylog.formatter import JsonFormatter
-# from pylog.handlers import AsyncHandler, RotatingFileHandler
+# from xylog import get_logger
+# from xylog.formatter import JsonFormatter
+# from xylog.handlers import AsyncHandler, RotatingFileHandler
 
 # handler = AsyncHandler(
 #     RotatingFileHandler(
@@ -217,9 +217,9 @@
 # logger.close()
 
 # TTY test
-# from pylog import get_logger
-# from pylog.formatter import ColoredFormatter
-# from pylog.handlers import ConsoleHandler
+# from xylog import get_logger
+# from xylog.formatter import ColoredFormatter
+# from xylog.handlers import ConsoleHandler
 
 # logger = get_logger(
 #     "TTYTest",
@@ -237,9 +237,9 @@
 # logger.critical("Critical message")
 
 # Color formatter with file handler
-# from pylog import get_logger
-# from pylog.formatter import ColoredFormatter
-# from pylog.handlers import FileHandler
+# from xylog import get_logger
+# from xylog.formatter import ColoredFormatter
+# from xylog.handlers import FileHandler
 
 # logger = get_logger(
 #     "FileTest",
@@ -256,9 +256,9 @@
 # logger.close()
 
 # TTY detection with async handler
-# from pylog import get_logger
-# from pylog.formatter import ColoredFormatter
-# from pylog.handlers import AsyncHandler, ConsoleHandler
+# from xylog import get_logger
+# from xylog.formatter import ColoredFormatter
+# from xylog.handlers import AsyncHandler, ConsoleHandler
 
 # logger = get_logger(
 #     "AsyncTTY",
@@ -277,9 +277,9 @@
 # logger.close()
 
 # Logger filter
-# from pylog import get_logger
-# from pylog.filters import LevelFilter
-# from pylog.levels import LogLevel
+# from xylog import get_logger
+# from xylog.filters import LevelFilter
+# from xylog.levels import LogLevel
 
 # logger = get_logger(
 #     "FilterTest",
@@ -298,10 +298,10 @@
 # logger.close()
 
 # Logger filter with different handlers
-# from pylog import get_logger
-# from pylog.filters import LevelFilter
-# from pylog.handlers import ConsoleHandler, FileHandler
-# from pylog.levels import LogLevel
+# from xylog import get_logger
+# from xylog.filters import LevelFilter
+# from xylog.handlers import ConsoleHandler, FileHandler
+# from xylog.levels import LogLevel
 
 # console = ConsoleHandler()
 
@@ -327,10 +327,10 @@
 # logger.close()
 
 # Logger filter with async
-# from pylog import get_logger
-# from pylog.filters import LevelFilter
-# from pylog.handlers import AsyncHandler, FileHandler
-# from pylog.levels import LogLevel
+# from xylog import get_logger
+# from xylog.filters import LevelFilter
+# from xylog.handlers import AsyncHandler, FileHandler
+# from xylog.levels import LogLevel
 
 # handler = AsyncHandler(
 #     FileHandler(
@@ -355,8 +355,8 @@
 # logger.close()
 
 # Basic hierarchy
-# from pylog import get_logger
-# from pylog.levels import LogLevel
+# from xylog import get_logger
+# from xylog.levels import LogLevel
 
 # app = get_logger("app")
 # api = get_logger("app.api")
@@ -368,8 +368,8 @@
 # print("Basic hierarchy passed")
 
 # Level inheritence
-# from pylog import get_logger
-# from pylog.levels import LogLevel
+# from xylog import get_logger
+# from xylog.levels import LogLevel
 
 # app = get_logger("app")
 # api = get_logger("app.api")
@@ -385,8 +385,8 @@
 # print("Level inheritance passed")
 
 # Child override
-# from pylog import get_logger
-# from pylog.levels import LogLevel
+# from xylog import get_logger
+# from xylog.levels import LogLevel
 
 # app = get_logger("app")
 # api = get_logger("app.api")
@@ -403,8 +403,8 @@
 # Propagation test
 # from pathlib import Path
 
-# from pylog import get_logger
-# from pylog.handlers import FileHandler
+# from xylog import get_logger
+# from xylog.handlers import FileHandler
 
 # log_path = Path("logs/hierarchy.log")
 
@@ -434,8 +434,8 @@
 # Propagation disabled
 # from pathlib import Path
 
-# from pylog import get_logger
-# from pylog.handlers import FileHandler
+# from xylog import get_logger
+# from xylog.handlers import FileHandler
 
 # log_path = Path("logs/no_propagation.log")
 
@@ -470,7 +470,7 @@
 # print("Propagation disabled passed")
 
 # Parent created AFTER child
-# from pylog import get_logger
+# from xylog import get_logger
 
 # child = get_logger("backend.api.auth")
 
@@ -483,8 +483,8 @@
 # print("Late parent creation passed")
 
 # No duplicate logging
-# from pylog import get_logger
-# from pylog.handlers import FileHandler
+# from xylog import get_logger
+# from xylog.handlers import FileHandler
 
 # root = get_logger(
 #     "myapp",
@@ -501,7 +501,7 @@
 # child.close()
 
 # Full hierarchy
-# from pylog import get_logger
+# from xylog import get_logger
 
 # root = get_logger("myapp")
 # api = get_logger("myapp.api")
@@ -517,8 +517,8 @@
 # print("Full hierarchy passed")
 
 # Global level configuration
-# from pylog import configure, get_logger
-# from pylog.levels import LogLevel
+# from xylog import configure, get_logger
+# from xylog.levels import LogLevel
 
 
 # configure(
@@ -536,8 +536,8 @@
 # Global handlers
 # from pathlib import Path
 
-# from pylog import configure, get_logger
-# from pylog.handlers import FileHandler
+# from xylog import configure, get_logger
+# from xylog.handlers import FileHandler
 
 # path = Path("logs/config.log")
 
@@ -559,8 +559,8 @@
 # assert "Configuration works" in path.read_text()
 
 # Child override
-# from pylog import configure, get_logger
-# from pylog.levels import LogLevel
+# from xylog import configure, get_logger
+# from xylog.levels import LogLevel
 
 # configure(
 #     level=LogLevel.WARNING,
@@ -574,8 +574,8 @@
 # assert logger.effective_level == LogLevel.DEBUG
 
 # Reconfiguration
-# from pylog import configure, get_logger
-# from pylog.levels import LogLevel
+# from xylog import configure, get_logger
+# from xylog.levels import LogLevel
 # configure(
 #     level=LogLevel.ERROR,
 # )
@@ -591,12 +591,12 @@
 # assert logger.effective_level == LogLevel.DEBUG
 
 # Shutdown
-# from pylog import shutdown
+# from xylog import shutdown
 
 # shutdown()
 
 # Nested context
-# from pylog import get_logger
+# from xylog import get_logger
 
 # logger = get_logger("ContextTest")
 
@@ -611,7 +611,7 @@
 # logger.close()
 
 # Explicit extra overrides context
-# from pylog import get_logger
+# from xylog import get_logger
 
 # logger = get_logger("ContextTest")
 # with logger.context(user_id=42):
@@ -621,8 +621,8 @@
 #     )
 
 # Temporarily clear context
-# from pylog import clear_context
-# from pylog import get_logger
+# from xylog import clear_context
+# from xylog import get_logger
 
 # logger = get_logger("ContextTest")
 # with logger.context(request_id="req-123"):
@@ -634,8 +634,8 @@
 #     logger.info("Context restored")
 
 # Async context capture
-from pylog import get_logger
-from pylog.handlers import AsyncHandler, FileHandler
+from xylog import get_logger
+from xylog.handlers import AsyncHandler, FileHandler
 
 handler = AsyncHandler(
     FileHandler("logs/context_async.log")
