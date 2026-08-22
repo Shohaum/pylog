@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import time
 import timeit
 from pathlib import Path
@@ -10,7 +9,6 @@ from pylog.filters import LevelFilter
 from pylog.formatter import JsonFormatter
 from pylog.handlers import (
     AsyncHandler,
-    ConsoleHandler,
     FileHandler,
 )
 from pylog.levels import LogLevel
