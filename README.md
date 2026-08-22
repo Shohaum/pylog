@@ -676,7 +676,7 @@ This reduced application-thread logging time by approximately **94.7%**.
 
 The underlying I/O work still occurs; asynchronous logging moves it to the worker thread.
 
-See [`benchmark.md`](benchmark.md) for methodology and optimization history.
+See [`benchmark.md`](https://github.com/Shohaum/pylog/blob/v3/main/docs/benchmarks.md) for methodology and optimization history.
 
 ---
 
